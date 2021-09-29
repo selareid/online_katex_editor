@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<!-- KaTeX requires the use of the HTML5 doctype. Without it, KaTeX may not render properly -->
+<html>
+  <head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.css" integrity="sha384-ysFyB7Is//Q1JNgERb0bLJokXKM8eWJsjEutGvthoHtBilHWgbdmbYkQZdwCIGIq" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.js" integrity="sha384-UWjC+k927Mtx6WQF5SzKTXLLrOYmzs69HvkUjiKvUwSOljzc+C6PrGquNpOvJBBo" crossorigin="anonymous"></script>
+
+    <style>
+      * {
+        font-size: 20px;
+        color: white;
+      } 
+
+      body {
+        background-color: black;
+      }
+
+      #inputBox {
+        float: left;
+        margin: 50px;
+        background-color: inherit;
+        min-height: 80vh;
+        width: 40vw;
+        min-width: 40vw;
+        border-color: white;
+        border-style: solid;
+        overflow: hidden;
+
+        white-space: pre-wrap;       /* Since CSS 2.1 */
+        white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+        white-space: -pre-wrap;      /* Opera 4-6 */
+        white-space: -o-pre-wrap;    /* Opera 7 */
+        word-wrap: break-word;       /* Internet Explorer 5.5+ */
+      }
+
+      #outputBox {
+        background-color: black;
+        float: left;
+        margin: 50px;
+        width: 40vw;
+        min-width: 40vw;
+
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <pre id="inputBox" contenteditable="true">c = \\pm\\sqrt{a^2 + b^2}</pre>
+    <div id="outputBox"></div>
+
+    <script>
+      inputBox = document.getElementById("inputBox");
+      outputBox = document.getElementById("outputBox");
+
+      render();
+
+      inputBox.addEventListener('input', function() {
+        render();
+      }, false);
+
+      function render() {
+        text = inputBox.innerText;
+        katex.render(text, outputBox, {
+          throwOnError: false
+        });
+        inputBox.style.height = outputBox.clientHeight + 'px';
+      }
+    </script>
+  </body>
+</html>
