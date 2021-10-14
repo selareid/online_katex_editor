@@ -148,7 +148,7 @@
             var outputBox = document.getElementById("outputBox");
 
 
-            inputBox.innerHTML = sessionStorage.getItem('katexAutosave') || inputBox.innerHTML;
+            inputBox.innerText = sessionStorage.getItem('katexAutosave') || inputBox.innerText;
 
             render();
 
