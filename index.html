@@ -1,70 +1,252 @@
 <!DOCTYPE html>
 <!-- KaTeX requires the use of the HTML5 doctype. Without it, KaTeX may not render properly -->
 <html>
-  <head>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.css" integrity="sha384-ysFyB7Is//Q1JNgERb0bLJokXKM8eWJsjEutGvthoHtBilHWgbdmbYkQZdwCIGIq" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.js" integrity="sha384-UWjC+k927Mtx6WQF5SzKTXLLrOYmzs69HvkUjiKvUwSOljzc+C6PrGquNpOvJBBo" crossorigin="anonymous"></script>
+    <head>
+        <meta charset="utf-8"/>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.css" integrity="sha384-ysFyB7Is//Q1JNgERb0bLJokXKM8eWJsjEutGvthoHtBilHWgbdmbYkQZdwCIGIq" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.js" integrity="sha384-UWjC+k927Mtx6WQF5SzKTXLLrOYmzs69HvkUjiKvUwSOljzc+C6PrGquNpOvJBBo" crossorigin="anonymous"></script>
+        <script>// Credit to Liam (Stack Overflow)
+            // https://stackoverflow.com/a/41034697/3480193
+            class Cursor {
+                static getCurrentCursorPosition(parentElement) {
+                    var selection = window.getSelection(),
+                        charCount = -1,
+                        node;
+                    
+                    if (selection.focusNode) {
+                        if (Cursor._isChildOf(selection.focusNode, parentElement)) {
+                            node = selection.focusNode; 
+                            charCount = selection.focusOffset;
+                            
+                            while (node) {
+                                if (node === parentElement) {
+                                    break;
+                                }
+            
+                                if (node.previousSibling) {
+                                    node = node.previousSibling;
+                                    charCount += node.textContent.length;
+                                } else {
+                                    node = node.parentNode;
+                                    if (node === null) {
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    return charCount;
+                }
+                
+                static setCurrentCursorPosition(chars, element) {
+                    if (chars >= 0) {
+                        var selection = window.getSelection();
+                        
+                        let range = Cursor._createRange(element, { count: chars });
+            
+                        if (range) {
+                            range.collapse(false);
+                            selection.removeAllRanges();
+                            selection.addRange(range);
+                        }
+                    }
+                }
+                
+                static _createRange(node, chars, range) {
+                    if (!range) {
+                        range = document.createRange()
+                        range.selectNode(node);
+                        range.setStart(node, 0);
+                    }
+            
+                    if (chars.count === 0) {
+                        range.setEnd(node, chars.count);
+                    } else if (node && chars.count >0) {
+                        if (node.nodeType === Node.TEXT_NODE) {
+                            if (node.textContent.length < chars.count) {
+                                chars.count -= node.textContent.length;
+                            } else {
+                                range.setEnd(node, chars.count);
+                                chars.count = 0;
+                            }
+                        } else {
+                            for (var lp = 0; lp < node.childNodes.length; lp++) {
+                                range = Cursor._createRange(node.childNodes[lp], chars, range);
+            
+                                if (chars.count === 0) {
+                                break;
+                                }
+                            }
+                        }
+                    } 
+            
+                    return range;
+                }
+                
+                static _isChildOf(node, parentElement) {
+                    while (node !== null) {
+                        if (node === parentElement) {
+                            return true;
+                        }
+                        node = node.parentNode;
+                    }
+            
+                    return false;
+                }
+            }
+        </script>
 
-    <style>
-      * {
-        font-size: 20px;
-        color: white;
-      } 
 
-      body {
-        background-color: black;
-      }
+        <style>
+        * {
+            font-size: 20px;
+            color: white;
+            caret-color: white;
+        } 
 
-      #inputBox {
-        float: left;
-        margin: 50px;
-        background-color: inherit;
-        min-height: 80vh;
-        width: 40vw;
-        min-width: 40vw;
-        border-color: white;
-        border-style: solid;
-        overflow: hidden;
+        body {
+            background-color: rgb(20, 20, 20);
+        }
 
-        white-space: pre-wrap;       /* Since CSS 2.1 */
-        white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
-        white-space: -pre-wrap;      /* Opera 4-6 */
-        white-space: -o-pre-wrap;    /* Opera 7 */
-        word-wrap: break-word;       /* Internet Explorer 5.5+ */
-      }
+        #inputBox {
+            float: left;
+            margin: 50px;
+            background-color: inherit;
+            min-height: 80vh;
+            width: 40vw;
+            min-width: 40vw;
+            border-color: white;
+            border-style: solid;
+            overflow-x: hidden;
+            overflow-y:scroll;
 
-      #outputBox {
-        background-color: black;
-        float: left;
-        margin: 50px;
-        width: 40vw;
-        min-width: 40vw;
+            white-space: pre-wrap;       /* Since CSS 2.1 */
+            white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+            white-space: -pre-wrap;      /* Opera 4-6 */
+            white-space: -o-pre-wrap;    /* Opera 7 */
+            word-wrap: break-word;       /* Internet Explorer 5.5+ */
+        }
 
-        text-align: center;
-      }
-    </style>
-  </head>
-  <body>
-    <pre id="inputBox" contenteditable="true">c = \\pm\\sqrt{a^2 + b^2}</pre>
-    <div id="outputBox"></div>
+        #outputBox {
+            background-color: inherit;
+            float: left;
+            margin-top: 50px;
+            width: 40vw;
+            min-width: 40vw;
 
-    <script>
-      inputBox = document.getElementById("inputBox");
-      outputBox = document.getElementById("outputBox");
+            text-align: center;
+        }
+        </style>
+    </head>
+    <body>
+        <pre id="inputBox" contenteditable="true">\displaystyle<br>c = \pm\sqrt{a^2 + b^2}</pre>
+        <span id="outputBox"></span>
 
-      render();
+        <script>
+            var inputBox = document.getElementById("inputBox");
+            var outputBox = document.getElementById("outputBox");
 
-      inputBox.addEventListener('input', function() {
-        render();
-      }, false);
 
-      function render() {
-        text = inputBox.innerText;
-        katex.render(text, outputBox, {
-          throwOnError: false
-        });
-        inputBox.style.height = outputBox.clientHeight + 'px';
-      }
-    </script>
-  </body>
+            inputBox.innerHTML = sessionStorage.getItem('katexAutosave') || inputBox.innerHTML;
+
+            render();
+
+            inputBox.addEventListener('input', function() {
+                render();
+            }, false);
+
+            function render() {
+                try {
+                    var text = inputBox.innerText;
+                    sessionStorage.setItem('katexAutosave', text);
+                    // var pre_render = outputBox.innerHTML;
+                    var html = katex.renderToString(text);
+                    outputBox.innerHTML = html;
+                    outputBox.style.backgroundColor = '';
+                }
+                catch (e) {
+                    if (e instanceof katex.ParseError) {
+                        // KaTeX can't parse the expression
+                        html = ("Error in LaTeX '" + text + "': " + e.message)
+                            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        console.log(html);
+                        // outputBox.innerHTML = pre_render + "\n" + html;
+                        outputBox.style.backgroundColor = '#800000';
+
+                        return;
+                    } else {
+                        throw e;  // other error
+                    }
+                }
+
+                // //Only runs if no error in parsing! // //
+
+                inputBox.style.height = outputBox.clientHeight + 'px';
+                
+                cursorPos = Cursor.getCurrentCursorPosition(inputBox);
+                newInputHTML = colorInnerHTML(inputBox.innerHTML);
+                if (newInputHTML != inputBox.innerHTML) {
+                    inputBox.innerHTML = newInputHTML;
+                    Cursor.setCurrentCursorPosition(cursorPos, inputBox);
+                }
+                
+            }
+
+            
+            function colorInnerHTML(text) {
+                // console.log("pre " + text)
+
+
+                //remove span tags from text
+                text = text.replace(/(<span)[^>]*(>)/g, "");
+                text = text.replace(/(<\/span>)/g, "");
+                // console.log("post " + text);
+
+
+                newText = '';
+                state = 'zoom';
+                updateI = 0;
+                
+
+                for (i=0;i<=text.length;i++) {
+                    curChar = text[i];
+
+                    switch (state) {
+                        case 'zoom':
+                            if (curChar == `\\`/* && text[i-1] != '>'*/) {
+                                // console.log('foudn \ at '+i);
+                                state = 'found_start';
+                                newText += text.substring(updateI, i);
+                                updateI = i;
+                            }
+                            else {
+                                newText += text.substring(updateI, i);
+                                updateI = i;
+                            }
+                            // console.log(curChar);
+                            break;
+                        case 'found_start':
+                            // console.log('woulda been: ' + curChar + ' ' + i + ' ' + updateI)
+
+                            if (['&', ' ', '{','}','<','>','='].includes(curChar) || i==text.length-1) { //handle end of highlight
+                                newText += '<span style="color:#70d14d">' + text.substring(updateI, i) + '</span>';
+
+                                updateI = i;
+                                state = 'zoom';
+                            }
+                            else if (updateI != i && curChar=='\\') {
+                                newText += '<span style="color:#70d14d">' + text.substring(updateI, i+1) + '</span>';
+
+                                updateI = i+1;
+                                state = 'zoom';
+                            }
+                            break;
+                    }
+                }
+
+                return newText;
+            }
+        </script>
+    </body>
 </html>
