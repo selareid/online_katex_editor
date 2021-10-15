@@ -161,7 +161,7 @@
                     var text = inputBox.innerText;
                     sessionStorage.setItem('katexAutosave', text);
                     // var pre_render = outputBox.innerHTML;
-                    var html = katex.renderToString(text);
+                    var html = katex.renderToString(text, {displayMode: true});
                     outputBox.innerHTML = html;
                     outputBox.style.backgroundColor = '';
                 }
