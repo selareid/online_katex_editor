@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<!-- KaTeX requires the use of the HTML5 doctype. Without it, KaTeX may not render properly -->
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.css" integrity="sha384-ysFyB7Is//Q1JNgERb0bLJokXKM8eWJsjEutGvthoHtBilHWgbdmbYkQZdwCIGIq" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.js" integrity="sha384-UWjC+k927Mtx6WQF5SzKTXLLrOYmzs69HvkUjiKvUwSOljzc+C6PrGquNpOvJBBo" crossorigin="anonymous"></script>
+
+        <style>
+        * {
+            font-size: 20px;
+        }
+
+        body {
+            background-color: rgb(20, 20, 20);
+        }
+
+        #displayBox {
+            /* margin-left: auto;
+            margin-right: auto; */
+            margin-top: 50px;
+            width: 100%;
+            /* max-width: 900px; */
+
+            /* background-color: inherit; */
+            text-align: center;
+            overflow: visible;
+
+            border-style: solid;
+            border-color: white;
+            border-width: 0.1px;
+
+            white-space: pre-wrap;       /* Since CSS 2.1 */
+            white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+            white-space: -pre-wrap;      /* Opera 4-6 */
+            white-space: -o-pre-wrap;    /* Opera 7 */
+            word-wrap: break-word;       /* Internet Explorer 5.5+ */
+        }
+        </style>
+    </head>
+    <body>
+        <p id="displayBox"></p>
+
+        <script>
+            var displayBox = document.getElementById("displayBox");
+            
+            render();
+
+            function render() {
+                try {
+                    var text = sessionStorage.getItem('katexAutosave');
+                    
+                    displayBox.innerHTML = katex.renderToString(text, {displayMode: true});
+                    displayBox.style.backgroundColor = '';
+                }
+                catch (e) {
+                    if (e instanceof katex.ParseError) {
+                        // KaTeX can't parse the expression
+                        displayBox.innerHTML = ("Error in LaTeX '" + text + "': " + e.message)
+                            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        
+                        displayBox.style.backgroundColor = '#800000';
+                    } else {
+                        throw e;  // other error
+                    }
+                }
+                
+            }
+        </script>
+    </body>
+</html>
