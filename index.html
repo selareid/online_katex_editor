@@ -109,6 +109,11 @@
             background-color: rgb(20, 20, 20);
         }
 
+        #statusBox {
+            position: absolute;
+            margin: 0.25em 0px 0px 5em;
+        }
+
         #inputBox {
             float: left;
             margin: 50px;
@@ -140,28 +145,57 @@
         </style>
     </head>
     <body>
-        <pre id="inputBox" contenteditable="true">\displaystyle<br>c = \pm\sqrt{a^2 + b^2}</pre>
+        <p id="statusBox">STATUS: Loading!</p>
+        <pre id="inputBox" contenteditable="true">\text{\Huge LOADING}</pre>
         <span id="outputBox"></span>
 
         <script>
+            var statusBox = document.getElementById("statusBox");
             var inputBox = document.getElementById("inputBox");
             var outputBox = document.getElementById("outputBox");
+            var note_name = undefined;
 
+            const api_url = "/katex_api/"
+
+            try {
+                note_name = /note=([^&#=]*)/.exec(window.location.search)[1];
+
+                var xmlHttp = new XMLHttpRequest();
+                xmlHttp.open( "GET", api_url + note_name, false ); // false for synchronous request
+                xmlHttp.send( null );
+                console.log(xmlHttp.responseText);
+
+                if (xmlHttp.status == 200) {
+                    sessionStorage.setItem('katexAutosave', xmlHttp.responseText);
+                    // window.location.replace("/");
+                }
+                
+            } catch(err) {
+                console.log("oopsie", err);
+            }
+
+            inputBox.innerText = sessionStorage.getItem('katexAutosave') || "\\text{\\Huge Finished Loading!}";
             inputBox.focus();
 
-            inputBox.innerText = sessionStorage.getItem('katexAutosave') || inputBox.innerText;
+            statusBox.innerText = "STATUS: Loaded";
 
-            render();
+            render(false);
 
             inputBox.addEventListener('input', function() {
                 render();
             }, false);
 
-            function render() {
+            function render(sync=true) {
                 try {
                     var text = inputBox.innerText;
-                    sessionStorage.setItem('katexAutosave', text);
-                    // var pre_render = outputBox.innerHTML;
+
+                    if (sync) {
+                        sessionStorage.setItem('katexAutosave', text);
+                        
+                        if (note_name !== undefined) storeNote(text);
+                        else statusBox.innerText = "Not Uploading";
+                    }
+
                     var html = katex.renderToString(text, {displayMode: true});
                     outputBox.innerHTML = html;
                     outputBox.style.backgroundColor = '';
@@ -194,7 +228,15 @@
                 
             }
 
-            
+            function storeNote(text) {
+                var xmlHttp = new XMLHttpRequest();
+                xmlHttp.open("POST", api_url + note_name, false ); // false for synchronous request
+                xmlHttp.send(text);
+                console.log(xmlHttp.responseText);
+                statusBox.innerText = "Upload Status: " + xmlHttp.statusText;
+            }
+
+
             function colorInnerHTML(text) {
                 // console.log("pre " + text)
 
