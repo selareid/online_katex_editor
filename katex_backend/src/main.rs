@@ -6,7 +6,7 @@ use std::io::{BufRead, BufReader, Lines, Take};
 use std::collections::HashMap;
 
 fn get_note_name(uri: &str) -> Result<String, &str> {
-    if uri.len() <= 1 {
+    if uri.len() <= 1 || uri.contains(|c: char| !c.is_ascii_alphanumeric()) {
         return Err("Invalid Note Name");
     }
     else {
