@@ -1,9 +1,10 @@
 use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
-use std::str;
-use std::io::{BufRead, BufReader, Lines, Take};
+use std::{fs, str};
+use std::io::{BufRead, BufReader, Error, Lines, Take};
 use std::collections::HashMap;
+use fs::File;
 
 struct NoteStore {
     notes_path: &'static str,
@@ -12,17 +13,37 @@ struct NoteStore {
 
 impl NoteStore {
     fn new(notes_path: &'static str) -> Self {
+        println!("Checking directory {} exists: {:?}", notes_path,
+                 match fs::create_dir_all(notes_path) {
+                     Ok(_) => "Success!".to_string(),
+                     Err(err) => err.to_string(),
+                 });
+
         NoteStore { notes_path, notes_map: Default::default() }
     }
 
-    fn store_note(&mut self, note_name: String, data: String) -> Result<String, String> {
-        self.notes_map.insert(note_name, data);
+    fn path_for_note(&self, note_name: &String) -> String {
+        format!("{}{}", self.notes_path, note_name)
+    }
+
+    fn store_note(&mut self, note_name: &String, data: String) -> Result<String, Error> {
+        // self.notes_map.insert(note_name, data); //store note in notes_map
+
+        let mut output = File::create(self.path_for_note(note_name))?;
+        write!(output, "{}", data)?;
+
         Ok(format!("SUCCESS!"))
     }
 
-    fn get_note(&self, note_name: &String) -> Result<String, String> {
+    fn get_note(&self, note_name: &String) -> Result<String, Error> {
         match self.notes_map.get(note_name) {
-            None => Err(format!("NO NOTE WITH NAME {}", note_name)),
+            None => {
+                let mut file = File::open(self.path_for_note(note_name))?;
+
+                let mut buffer = String::new();
+                file.read_to_string(&mut buffer)?;
+                Ok(buffer)
+            },
             Some(note_data) => Ok(String::clone(note_data)),
         }
     }
@@ -37,9 +58,9 @@ fn get_note_name(uri: &str) -> Result<String, &str> {
 }
 
 fn main() {
-    let mut note_store: NoteStore = NoteStore::new("notes/");
+    let mut note_store: NoteStore = NoteStore::new("notes_test_path/");
 
-    note_store.store_note(String::from("ohio_katex"), String::from(r"❤️{\Huge \text{OHIO GAMERS!!}}\\\text{you are a susssy baka}"));
+    note_store.store_note(&String::from("ohio_katex"), String::from(r"❤️{\Huge \text{OHIO GAMERS!!}}\\\text{you are a susssy baka}"));
 
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
 
@@ -93,7 +114,7 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
 fn attempt_store_note(note_store: &mut NoteStore, uri: &str, data_string: String) -> (String, String) {
     match get_note_name(uri) {
         Ok(note_name) => {
-            note_store.store_note(note_name, data_string);
+            note_store.store_note(&note_name, data_string);
             (format!("HTTP/1.1 200 OK"), format!("Seems to be inserted"))
         }
         Err(err) => {
@@ -166,7 +187,7 @@ fn get_return_data_for_get_request(uri: &str, note_store: &NoteStore) -> (String
     match get_note_name(uri) {
         Ok(note_name) => {
             match note_store.get_note(&note_name) {
-                Err(err) => (String::from("HTTP/1.1 404 NOT FOUND"), err),
+                Err(err) => (String::from("HTTP/1.1 404 NOT FOUND"), err.to_string()),
                 Ok(note_data) => (String::from("HTTP/1.1 200 OK"), format!("{}", note_data.clone())),
             }
         }
