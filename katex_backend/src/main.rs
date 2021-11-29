@@ -27,21 +27,21 @@ impl NoteStore {
     }
 
     fn store_note(&mut self, note_name: &String, data: String) -> Result<String, Error> {
-        // self.notes_map.insert(note_name, data); //store note in notes_map
-
         let mut output = File::create(self.path_for_note(note_name))?;
         write!(output, "{}", data)?;
 
+        self.notes_map.insert(String::clone(note_name), data); //update cache notes_map
         Ok(format!("SUCCESS!"))
     }
 
-    fn get_note(&self, note_name: &String) -> Result<String, Error> {
+    fn get_note(&mut self, note_name: &String) -> Result<String, Error> {
         match self.notes_map.get(note_name) {
-            None => {
+            None => { //not in notes_map, get from file
                 let mut file = File::open(self.path_for_note(note_name))?;
-
                 let mut buffer = String::new();
-                file.read_to_string(&mut buffer)?;
+                file.read_to_string(&mut buffer)?; //if unavailable returns error
+
+                self.notes_map.insert(String::clone(note_name), String::clone(&buffer)); //cache in notes_map
                 Ok(buffer)
             },
             Some(note_data) => Ok(String::clone(note_data)),
@@ -87,7 +87,7 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
                 &"POST" => {
                     println!("New Request for {}", uri);
 
-                    let mut data_length: u64 = get_data_length_of_posted_content(&mut lines);
+                    let data_length: u64 = get_data_length_of_posted_content(&mut lines);
                     let mut take = reader.take(data_length);
                     let data_string = get_request_data(&mut take);
                     let (reply_code, reply_contents) = attempt_store_note(note_store, uri, data_string);
@@ -114,8 +114,10 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
 fn attempt_store_note(note_store: &mut NoteStore, uri: &str, data_string: String) -> (String, String) {
     match get_note_name(uri) {
         Ok(note_name) => {
-            note_store.store_note(&note_name, data_string);
-            (format!("HTTP/1.1 200 OK"), format!("Seems to be inserted"))
+            match note_store.store_note(&note_name, data_string) {
+                Ok(_) => (format!("HTTP/1.1 200 OK"), format!("Seems to be inserted")),
+                Err(err) => (format!("HTTP/1.1 500 INTERNAL SERVER ERROR"), err.to_string()),
+            }
         }
         Err(err) => {
             (format!("HTTP/1.1 400 BAD REQUEST"), String::from(err))
@@ -126,7 +128,7 @@ fn attempt_store_note(note_store: &mut NoteStore, uri: &str, data_string: String
 fn get_request_data(mut take: &mut Take<BufReader<&TcpStream>>) -> String {
     let mut data_string = String::new();
 
-    let mut buffers: Vec<[u8; 32]> = add_to_buffer(&mut take);
+    let buffers: Vec<[u8; 32]> = add_to_buffer(&mut take);
     println!("Buffers {:?}", buffers);
     buffers.iter().for_each(|buf| buf.iter().filter(|c| *c != &0_u8).for_each(|c| data_string.push(char::from(*c))));
 
@@ -169,7 +171,7 @@ fn get_data_length_of_posted_content(lines: &mut Lines<&mut BufReader<&TcpStream
     return data_length;
 }
 
-fn handle_get_request(uri: &str, mut stream: TcpStream, note_store: &NoteStore) {
+fn handle_get_request(uri: &str, mut stream: TcpStream, note_store: &mut NoteStore) {
     let (status_line, contents) = get_return_data_for_get_request(uri, note_store);
 
     let response = format!(
@@ -183,7 +185,7 @@ fn handle_get_request(uri: &str, mut stream: TcpStream, note_store: &NoteStore) 
     stream.flush().unwrap();
 }
 
-fn get_return_data_for_get_request(uri: &str, note_store: &NoteStore) -> (String, String) {
+fn get_return_data_for_get_request(uri: &str, note_store: &mut NoteStore) -> (String, String) {
     match get_note_name(uri) {
         Ok(note_name) => {
             match note_store.get_note(&note_name) {
