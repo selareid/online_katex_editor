@@ -5,6 +5,29 @@ use std::str;
 use std::io::{BufRead, BufReader, Lines, Take};
 use std::collections::HashMap;
 
+struct NoteStore {
+    notes_path: &'static str,
+    notes_map: HashMap<String, String>
+}
+
+impl NoteStore {
+    fn new(notes_path: &'static str) -> Self {
+        NoteStore { notes_path, notes_map: Default::default() }
+    }
+
+    fn store_note(&mut self, note_name: String, data: String) -> Result<String, String> {
+        self.notes_map.insert(note_name, data);
+        Ok(format!("SUCCESS!"))
+    }
+
+    fn get_note(&self, note_name: &String) -> Result<String, String> {
+        match self.notes_map.get(note_name) {
+            None => Err(format!("NO NOTE WITH NAME {}", note_name)),
+            Some(note_data) => Ok(String::clone(note_data)),
+        }
+    }
+}
+
 fn get_note_name(uri: &str) -> Result<String, &str> {
     if uri.len() <= 1 || uri.contains(|c: char| !c.is_ascii_alphanumeric()) {
         return Err("Invalid Note Name");
@@ -15,9 +38,9 @@ fn get_note_name(uri: &str) -> Result<String, &str> {
 }
 
 fn main() {
-    let mut notes_map: HashMap<String, String> = Default::default();
+    let mut note_store: NoteStore = NoteStore::new("notes/");
 
-    notes_map.insert(String::from("ohio_katex"), r"❤️{\Huge \text{OHIO GAMERS!!}}\\\text{you are a susssy baka}".parse().unwrap());
+    note_store.store_note(String::from("ohio_katex"), String::from(r"❤️{\Huge \text{OHIO GAMERS!!}}\\\text{you are a susssy baka}"));
 
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
 
@@ -25,11 +48,11 @@ fn main() {
 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
-        handle_connection(stream, &mut notes_map);
+        handle_connection(stream, &mut note_store);
     }
 }
 
-fn handle_connection(mut stream: TcpStream, notes_map: &mut HashMap<String, String>) {
+fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
     let mut reader = BufReader::new(&stream);
 
     let mut lines = reader.by_ref().lines();
@@ -40,14 +63,14 @@ fn handle_connection(mut stream: TcpStream, notes_map: &mut HashMap<String, Stri
     match first_line_vec.get(0) {
         Some(request_type) => {
             match request_type {
-                &"GET" => {handle_get_request(uri, stream, notes_map)}
+                &"GET" => {handle_get_request(uri, stream, note_store)}
                 &"POST" => {
                     println!("New Request for {}", uri);
 
                     let mut data_length: u64 = get_data_length_of_posted_content(&mut lines);
                     let mut take = reader.take(data_length);
                     let data_string = get_request_data(&mut take);
-                    let (reply_code, reply_contents) = attempt_store_note(notes_map, uri, data_string);
+                    let (reply_code, reply_contents) = attempt_store_note(note_store, uri, data_string);
 
                     let response = format!(
                         "{}\r\nContent-Length: {}\r\n\r\n{}",
@@ -68,10 +91,10 @@ fn handle_connection(mut stream: TcpStream, notes_map: &mut HashMap<String, Stri
     }
 }
 
-fn attempt_store_note(notes_map: &mut HashMap<String, String>, uri: &str, data_string: String) -> (String, String) {
+fn attempt_store_note(note_store: &mut NoteStore, uri: &str, data_string: String) -> (String, String) {
     match get_note_name(uri) {
         Ok(note_name) => {
-            notes_map.insert(note_name, data_string);
+            note_store.store_note(note_name, data_string);
             (format!("HTTP/1.1 200 OK"), format!("Seems to be inserted"))
         }
         Err(err) => {
@@ -126,8 +149,8 @@ fn get_data_length_of_posted_content(lines: &mut Lines<&mut BufReader<&TcpStream
     return data_length;
 }
 
-fn handle_get_request(uri: &str, mut stream: TcpStream, notes_map: &HashMap<String, String>) {
-    let (status_line, contents) = get_return_data_for_get_request(uri, notes_map);
+fn handle_get_request(uri: &str, mut stream: TcpStream, note_store: &NoteStore) {
+    let (status_line, contents) = get_return_data_for_get_request(uri, note_store);
 
     let response = format!(
         "{}\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: {}\r\n\r\n{}",
@@ -140,12 +163,12 @@ fn handle_get_request(uri: &str, mut stream: TcpStream, notes_map: &HashMap<Stri
     stream.flush().unwrap();
 }
 
-fn get_return_data_for_get_request(uri: &str, notes_map: &HashMap<String, String>) -> (String, String) {
+fn get_return_data_for_get_request(uri: &str, note_store: &NoteStore) -> (String, String) {
     match get_note_name(uri) {
         Ok(note_name) => {
-            match notes_map.get(&note_name) {
-                None => (String::from("HTTP/1.1 404 NOT FOUND"), format!("Blank Note: {}", note_name)),
-                Some(note_data) => (String::from("HTTP/1.1 200 OK"), format!("{}", note_data.clone())),
+            match note_store.get_note(&note_name) {
+                Err(err) => (String::from("HTTP/1.1 404 NOT FOUND"), err),
+                Ok(note_data) => (String::from("HTTP/1.1 200 OK"), format!("{}", note_data.clone())),
             }
         }
         Err(err) => (String::from("HTTP/1.1 400 BAD REQUEST"), String::from(err)),
