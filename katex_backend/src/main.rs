@@ -29,11 +29,10 @@ impl NoteStore {
 }
 
 fn get_note_name(uri: &str) -> Result<String, &str> {
-    if uri.len() <= 1 || uri.contains(|c: char| !c.is_ascii_alphanumeric()) {
-        return Err("Invalid Note Name");
-    }
-    else {
-        return Ok(String::from(&uri[1..]));
+    return if uri.len() <= 1 || String::from(&uri[1..]).contains(|c: char| !c.is_ascii_alphanumeric() && c != '_') {
+        Err("Invalid Note Name")
+    } else {
+        Ok(String::from(&uri[1..]))
     }
 }
 
