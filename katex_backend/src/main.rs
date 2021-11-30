@@ -2,9 +2,13 @@ use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::{fs, str};
-use std::io::{BufRead, BufReader, Error, Lines, Take};
+use std::io::{BufRead, BufReader, Lines, Take};
 use std::collections::HashMap;
 use fs::File;
+use std::error::Error;
+
+const MAX_NOTE_LENGTH: u64 = 10000000;
+const MAX_NOTES: usize = 99;
 
 struct NoteStore {
     notes_path: &'static str,
@@ -26,7 +30,11 @@ impl NoteStore {
         format!("{}{}", self.notes_path, note_name)
     }
 
-    fn store_note(&mut self, note_name: &String, data: String) -> Result<String, Error> {
+    fn store_note(&mut self, note_name: &String, data: String) -> Result<String, Box<dyn Error>> {
+        if self.notes_map.len() >= MAX_NOTES {
+            return Err("Max Number of Notes Reached")?;
+        }
+
         let mut output = File::create(self.path_for_note(note_name))?;
         write!(output, "{}", data)?;
 
@@ -34,7 +42,7 @@ impl NoteStore {
         Ok(format!("SUCCESS!"))
     }
 
-    fn get_note(&mut self, note_name: &String) -> Result<String, Error> {
+    fn get_note(&mut self, note_name: &String) -> Result<String, Box<dyn Error>> {
         match self.notes_map.get(note_name) {
             None => { //not in notes_map, get from file
                 let mut file = File::open(self.path_for_note(note_name))?;
@@ -58,7 +66,7 @@ fn get_note_name(uri: &str) -> Result<String, &str> {
 }
 
 fn main() {
-    let mut note_store: NoteStore = NoteStore::new("notes_test_path/");
+    let mut note_store: NoteStore = NoteStore::new("notes_store/");
 
     note_store.store_note(&String::from("ohio_katex"), String::from(r"❤️{\Huge \text{OHIO GAMERS!!}}\\\text{you are a susssy baka}"));
 
@@ -88,18 +96,32 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
                     println!("New Request for {}", uri);
 
                     let data_length: u64 = get_data_length_of_posted_content(&mut lines);
-                    let mut take = reader.take(data_length);
-                    let data_string = get_request_data(&mut take);
-                    let (reply_code, reply_contents) = attempt_store_note(note_store, uri, data_string);
 
-                    let response = format!(
-                        "{}\r\nContent-Length: {}\r\n\r\n{}",
-                        reply_code,
-                        reply_contents.len(),
-                        reply_contents
-                    );
+                    let response: String = if data_length > MAX_NOTE_LENGTH {
+                        let status = String::from("HTTP/1.1 413 NOTE SIZE TOO LARGE");
+                        let contents = format!("Note Length: {}, Max Length: {}", data_length, MAX_NOTE_LENGTH);
 
-                    println!("returning {}", reply_contents);
+                        format!("{}\r\nContent-Length: {}\r\n\r\n{}",
+                                status,
+                                contents.len(),
+                                contents
+                        )
+                    }
+                    else {
+                        let mut take = reader.take(data_length);
+                        let data_string = get_request_data(&mut take);
+                        let (reply_code, reply_contents) = attempt_store_note(note_store, uri, data_string);
+
+                        println!("returning {}", reply_contents);
+
+                        format!(
+                            "{}\r\nContent-Length: {}\r\n\r\n{}",
+                            reply_code,
+                            reply_contents.len(),
+                            reply_contents
+                        )
+                    };
+
 
                     stream.write(response.as_bytes()).unwrap();
                     stream.flush().unwrap();
