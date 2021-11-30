@@ -72,7 +72,7 @@ fn main() {
 
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
 
-    println!("listening!");
+    println!("Listening on {}", listener.local_addr().unwrap());
 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
@@ -93,7 +93,7 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
             match request_type {
                 &"GET" => {handle_get_request(uri, stream, note_store)}
                 &"POST" => {
-                    println!("New Request for {}", uri);
+                    println!("New POST request for {}", uri);
 
                     let data_length: u64 = get_data_length_of_posted_content(&mut lines);
 
@@ -112,7 +112,7 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
                         let data_string = get_request_data(&mut take);
                         let (reply_code, reply_contents) = attempt_store_note(note_store, uri, data_string);
 
-                        println!("returning {}", reply_contents);
+                        println!(" Replying {}", reply_contents);
 
                         format!(
                             "{}\r\nContent-Length: {}\r\n\r\n{}",
@@ -151,7 +151,7 @@ fn get_request_data(mut take: &mut Take<BufReader<&TcpStream>>) -> String {
     let mut data_string = String::new();
 
     let buffers: Vec<[u8; 32]> = add_to_buffer(&mut take);
-    println!("Buffers {:?}", buffers);
+
     buffers.iter().for_each(|buf| buf.iter().filter(|c| *c != &0_u8).for_each(|c| data_string.push(char::from(*c))));
 
     return data_string;
@@ -164,7 +164,7 @@ fn add_to_buffer(take: &mut Take<BufReader<&TcpStream>>) -> Vec<[u8; 32]>{
     while !stop {
         let mut buf = [0; 32];
         take.read(&mut buf);
-        println!("{}", String::from_utf8_lossy(&buf));
+
         stop = buf[buf.len() - 1] == 0;
 
         buffers.push(buf);
@@ -178,7 +178,6 @@ fn get_data_length_of_posted_content(lines: &mut Lines<&mut BufReader<&TcpStream
 
     for line in lines {
         let request_content = line.unwrap();
-        println!("Request: {:?}", request_content);
 
         if request_content.contains("Content-Length") {
             let mut split_content = request_content.split_whitespace();
