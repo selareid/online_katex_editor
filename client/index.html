@@ -154,6 +154,8 @@
             var inputBox = document.getElementById("inputBox");
             var outputBox = document.getElementById("outputBox");
             var note_name = undefined;
+            var posted_status = true;
+            var upload_iterations = 0;
 
             const api_url = "/katex_api/"
 
@@ -229,11 +231,26 @@
             }
 
             function storeNote(text) {
-                var xmlHttp = new XMLHttpRequest();
-                xmlHttp.open("POST", api_url + note_name, false ); // false for synchronous request
-                xmlHttp.send(text);
-                console.log(xmlHttp.responseText);
-                statusBox.innerText = "Upload Status: " + xmlHttp.statusText;
+                upload_iterations += 1;
+
+                if (posted_status) {
+                    let this_upload_iteration = upload_iterations;
+                    posted_status = false;
+
+                    var xmlHttp = new XMLHttpRequest();
+                    xmlHttp.open("POST", api_url + note_name, true); // true for asynchronous request
+                    
+                    xmlHttp.onload = function () {
+                        posted_status = true;
+                        console.log(xmlHttp.responseText);
+                        statusBox.innerText = "Upload Status: " + xmlHttp.statusText + "\n Sync Status: " + (this_upload_iteration===upload_iterations);
+                    }
+
+                    xmlHttp.send(text);
+                }
+                else {
+                    statusBox.innerText = "Upload Status: Out Of Sync";
+                }
             }
 
 
