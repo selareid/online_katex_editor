@@ -68,8 +68,6 @@ fn get_note_name(uri: &str) -> Result<String, &str> {
 fn main() {
     let mut note_store: NoteStore = NoteStore::new("notes_store/");
 
-    note_store.store_note(&String::from("ohio_katex"), String::from(r"❤️{\Huge \text{OHIO GAMERS!!}}\\\text{you are a susssy baka}"));
-
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
 
     println!("Listening on {}", listener.local_addr().unwrap());
