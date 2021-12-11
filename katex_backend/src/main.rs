@@ -79,7 +79,7 @@ fn main() {
 }
 
 fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
-    let mut reader = BufReader::new(&stream);
+    let mut reader = BufReader::with_capacity(MAX_NOTE_LENGTH as usize + 1000, &stream);
 
     let mut lines = reader.by_ref().lines();
     let first_line = lines.next().unwrap().unwrap();
