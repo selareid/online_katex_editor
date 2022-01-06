@@ -223,7 +223,7 @@
                         else statusBox.innerText = "Not Uploading";
                     }
 
-                    var html = katex.renderToString(text, {displayMode: true});
+                    var html = katex.renderToString(text, {displayMode: true, trust: true});
                     outputBox.innerHTML = html;
                     outputBox.style.backgroundColor = '';
                 }
