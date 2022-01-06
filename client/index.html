@@ -97,7 +97,6 @@
             }
         </script>
 
-
         <style>
         * {
             font-size: 20px;
@@ -111,7 +110,11 @@
 
         #statusBox {
             position: absolute;
-            margin: 0.25em 0px 0px 5em;
+            padding: 0.25em 0px 0px 10em;
+        }
+
+        #katex_wrapper {
+            padding-top: 1.5em;
         }
 
         #inputBox {
@@ -142,12 +145,28 @@
 
             text-align: center;
         }
+
+        #macrosButton {
+            position: absolute;
+            margin-top: 1em;
+            margin-left: 3em;
+            border: none;
+            cursor: pointer;
+
+            font-size: 1em;
+            background-color: grey;
+            color: black;
+        }
         </style>
     </head>
     <body>
         <p id="statusBox">STATUS: Loading!</p>
-        <pre id="inputBox" contenteditable="true">\text{\Huge LOADING}</pre>
-        <span id="outputBox"></span>
+        <button id="macrosButton" onclick="location.href='?note=macros'; location.reload(true);" type="button">load macros</button>
+        
+        <div id="katex_wrapper">
+            <pre id="inputBox" contenteditable="true">\text{\Huge LOADING}</pre>
+            <span id="outputBox"></span>
+        </div>
 
         <script>
             var statusBox = document.getElementById("statusBox");
