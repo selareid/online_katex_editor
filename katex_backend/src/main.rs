@@ -10,6 +10,7 @@ use std::error::Error;
 const MAX_NOTE_LENGTH: u64 = 10000000;
 const MAX_NOTES: usize = 99;
 const SPECIAL_NOTE_PREFIX: &str = "test_special_note_";
+const RESERVED_NOTE_NAMES: [&str; 1] = ["macros"];
 
 struct NoteStore {
     notes_path: &'static str,
@@ -58,6 +59,10 @@ impl NoteStore {
     }
 
     fn attempt_store_note_for_request(&mut self, note_name: &String, data: String) -> (String, String) {
+        if RESERVED_NOTE_NAMES.contains(&note_name.as_str()) || is_special_note(note_name) {
+            return (format!("HTTP/1.1 401 Unauthorized"), format!("You're not allowed to edit note {}", &note_name));
+        }
+
         match self.store_note(note_name, data) {
             Ok(_) => (format!("HTTP/1.1 200 OK"), format!("Seems to be inserted")),
             Err(err) => (format!("HTTP/1.1 500 INTERNAL SERVER ERROR"), err.to_string()),
