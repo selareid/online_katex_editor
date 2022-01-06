@@ -96,7 +96,6 @@
                 }
             }
         </script>
-
         <style>
         * {
             font-size: 20px;
@@ -268,7 +267,7 @@
                     xmlHttp.onload = function () {
                         posted_status = true;
                         console.log(xmlHttp.responseText);
-                        statusBox.innerText = "Upload Status: " + xmlHttp.statusText + "\n Sync Status: " + (this_upload_iteration===upload_iterations);
+                        statusBox.innerText = "Upload Status: " + xmlHttp.statusText + "\n Sync Status: " + (xmlHttp.status === 200 && this_upload_iteration===upload_iterations);
                     }
 
                     xmlHttp.send(text);
@@ -277,7 +276,6 @@
                     statusBox.innerText = "Upload Status: Out Of Sync";
                 }
             }
-
 
             function colorInnerHTML(text) {
                 // console.log("pre " + text)
