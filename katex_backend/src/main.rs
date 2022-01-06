@@ -9,6 +9,7 @@ use std::error::Error;
 
 const MAX_NOTE_LENGTH: u64 = 10000000;
 const MAX_NOTES: usize = 99;
+const SPECIAL_NOTE_PREFIX: &str = "test_special_note_";
 
 struct NoteStore {
     notes_path: &'static str,
@@ -26,7 +27,7 @@ impl NoteStore {
         NoteStore { notes_path, notes_map: Default::default() }
     }
 
-    fn path_for_note(&self, note_name: &String) -> String {
+    fn get_path_for_note(&self, note_name: &String) -> String {
         format!("{}{}", self.notes_path, note_name)
     }
 
@@ -35,7 +36,7 @@ impl NoteStore {
             return Err("Max Number of Notes Reached")?;
         }
 
-        let mut output = File::create(self.path_for_note(note_name))?;
+        let mut output = File::create(self.get_path_for_note(note_name))?;
         write!(output, "{}", data)?;
 
         self.notes_map.insert(String::clone(note_name), data); //update cache notes_map
@@ -45,7 +46,7 @@ impl NoteStore {
     fn get_note(&mut self, note_name: &String) -> Result<String, Box<dyn Error>> {
         match self.notes_map.get(note_name) {
             None => { //not in notes_map, get from file
-                let mut file = File::open(self.path_for_note(note_name))?;
+                let mut file = File::open(self.get_path_for_note(note_name))?;
                 let mut buffer = String::new();
                 file.read_to_string(&mut buffer)?; //if unavailable returns error
 
@@ -60,6 +61,20 @@ impl NoteStore {
         match self.store_note(note_name, data) {
             Ok(_) => (format!("HTTP/1.1 200 OK"), format!("Seems to be inserted")),
             Err(err) => (format!("HTTP/1.1 500 INTERNAL SERVER ERROR"), err.to_string()),
+        }
+    }
+
+    fn attempt_get_note_for_request(&mut self, note_name: &String) -> (String, String) {
+        match self.get_note(&note_name) {
+            Err(err) => (String::from("HTTP/1.1 404 NOT FOUND"), err.to_string()),
+            Ok(note_data) => (String::from("HTTP/1.1 200 OK"), format!("{}", note_data.clone())),
+        }
+    }
+
+    fn handle_special_note_get(&mut self, stripped_note_name: &str) -> (String, String) {
+        match stripped_note_name {
+            "macros" => self.attempt_get_note_for_request(&String::from(stripped_note_name)),
+            &_ => (String::from("HTTP/1.1 404 NOT FOUND"), format!("Couldn't find special note {}", stripped_note_name)),
         }
     }
 }
@@ -205,11 +220,20 @@ fn handle_get_request(uri: &str, mut stream: TcpStream, note_store: &mut NoteSto
 fn get_return_data_for_get_request(uri: &str, note_store: &mut NoteStore) -> (String, String) {
     match get_note_name(uri) {
         Ok(note_name) => {
-            match note_store.get_note(&note_name) {
-                Err(err) => (String::from("HTTP/1.1 404 NOT FOUND"), err.to_string()),
-                Ok(note_data) => (String::from("HTTP/1.1 200 OK"), format!("{}", note_data.clone())),
+            if is_special_note(&note_name) {
+                let stripped_note_name: &str = &note_name[SPECIAL_NOTE_PREFIX.len()..]; //note_name without SPECIAL_NOTE_PREFIX
+                note_store.handle_special_note_get(stripped_note_name)
+            }
+            else {
+                // Handle regular note
+                note_store.attempt_get_note_for_request(&note_name)
             }
         }
         Err(err) => (String::from("HTTP/1.1 400 BAD REQUEST"), String::from(err)),
     }
+}
+
+fn is_special_note(note_name: &String) -> bool {
+    //checks that note_name starts with SPECIAL_NOTE_PREFIX
+    &note_name[..SPECIAL_NOTE_PREFIX.len()] == SPECIAL_NOTE_PREFIX
 }
