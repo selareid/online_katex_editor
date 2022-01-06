@@ -10,7 +10,7 @@ use std::error::Error;
 const MAX_NOTE_LENGTH: u64 = 10000000;
 const MAX_NOTES: usize = 99;
 const SPECIAL_NOTE_PREFIX: &str = "test_special_note_";
-const RESERVED_NOTE_NAMES: [&str; 1] = ["macros"];
+const RESERVED_NOTE_NAMES: [&str; 2] = ["macros", "notes_list"];
 
 struct NoteStore {
     notes_path: &'static str,
@@ -79,6 +79,8 @@ impl NoteStore {
     fn handle_special_note_get(&mut self, stripped_note_name: &str) -> (String, String) {
         match stripped_note_name {
             "macros" => self.attempt_get_note_for_request(&String::from(stripped_note_name)),
+            "notes_list" => (String::from("HTTP/1.1 200 OK"),
+                             format!("Only includes notes used in this session:\n{}", self.notes_map.keys().map(|s| String::clone(s)).reduce(|a, b| format!("{}\n{}", a, b)).unwrap_or("".to_string()))),
             &_ => (String::from("HTTP/1.1 404 NOT FOUND"), format!("Couldn't find special note {}", stripped_note_name)),
         }
     }
