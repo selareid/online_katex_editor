@@ -235,5 +235,5 @@ fn get_return_data_for_get_request(uri: &str, note_store: &mut NoteStore) -> (St
 
 fn is_special_note(note_name: &String) -> bool {
     //checks that note_name starts with SPECIAL_NOTE_PREFIX
-    &note_name[..SPECIAL_NOTE_PREFIX.len()] == SPECIAL_NOTE_PREFIX
+    note_name.len() >= SPECIAL_NOTE_PREFIX.len() && &note_name[..SPECIAL_NOTE_PREFIX.len()] == SPECIAL_NOTE_PREFIX
 }
