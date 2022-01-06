@@ -55,6 +55,13 @@ impl NoteStore {
             Some(note_data) => Ok(String::clone(note_data)),
         }
     }
+
+    fn attempt_store_note_for_request(&mut self, note_name: &String, data: String) -> (String, String) {
+        match self.store_note(note_name, data) {
+            Ok(_) => (format!("HTTP/1.1 200 OK"), format!("Seems to be inserted")),
+            Err(err) => (format!("HTTP/1.1 500 INTERNAL SERVER ERROR"), err.to_string()),
+        }
+    }
 }
 
 fn get_note_name(uri: &str) -> Result<String, &str> {
@@ -89,7 +96,7 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
     match first_line_vec.get(0) {
         Some(request_type) => {
             match request_type {
-                &"GET" => {handle_get_request(uri, stream, note_store)}
+                &"GET" => {handle_get_request(uri, stream, note_store);}
                 &"POST" => {
                     println!("New POST request for {}", uri);
 
@@ -108,7 +115,12 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
                     else {
                         let mut take = reader.take(data_length);
                         let data_string = get_request_data(&mut take);
-                        let (reply_code, reply_contents) = attempt_store_note(note_store, uri, data_string);
+
+                        let (reply_code, reply_contents): (String, String) = match get_note_name(uri) {
+                            Ok(note_name) => note_store.attempt_store_note_for_request(&note_name, data_string),
+                            Err(err) => (format!("HTTP/1.1 400 BAD REQUEST"), String::from(err)),
+                        };
+
 
                         println!(" Replying {}", reply_contents);
 
@@ -128,20 +140,6 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
             }
         }
         None => {panic!("Woah, first_line of http request is empty :o")}
-    }
-}
-
-fn attempt_store_note(note_store: &mut NoteStore, uri: &str, data_string: String) -> (String, String) {
-    match get_note_name(uri) {
-        Ok(note_name) => {
-            match note_store.store_note(&note_name, data_string) {
-                Ok(_) => (format!("HTTP/1.1 200 OK"), format!("Seems to be inserted")),
-                Err(err) => (format!("HTTP/1.1 500 INTERNAL SERVER ERROR"), err.to_string()),
-            }
-        }
-        Err(err) => {
-            (format!("HTTP/1.1 400 BAD REQUEST"), String::from(err))
-        }
     }
 }
 
