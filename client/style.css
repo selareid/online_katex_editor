@@ -1,0 +1,61 @@
+* {
+    font-size: 20px;
+    color: white;
+    caret-color: white;
+} 
+
+body {
+    background-color: rgb(20, 20, 20);
+}
+
+.katex-display > .katex { white-space: normal }
+/* Add space between broken lines: */
+.katex-display > .base { margin: 0.25em 0 }
+/* Compensate by reducing space around display math */
+.katex-display { margin: 0.5em 0; }
+
+#statusBox {
+    position: absolute;
+    padding: 0.5em 0px 0px 10em;
+}
+
+button {
+    border: none;
+    cursor: pointer;
+    background-color: grey;
+    color: black;
+    font-size: 1em;
+}
+
+#katex_wrapper {
+    padding-top: 0.5em;
+}
+
+#inputBox {
+    float: left;
+    margin: 50px;
+    background-color: inherit;
+    min-height: 80vh;
+    width: 40vw;
+    min-width: 40vw;
+    border-color: white;
+    border-style: solid;
+    overflow-x: hidden;
+    overflow-y:scroll;
+
+    white-space: pre-wrap;       /* Since CSS 2.1 */
+    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+    white-space: -pre-wrap;      /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+
+#outputBox {
+    background-color: inherit;
+    float: left;
+    margin-top: 50px;
+    width: 40vw;
+    min-width: 40vw;
+
+    text-align: center;
+}
