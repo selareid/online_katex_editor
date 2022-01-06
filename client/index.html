@@ -181,8 +181,9 @@
             var posted_status = true;
             var upload_iterations = 0;
 
-            const api_url = "/katex_api/"
+            const api_url = "/katex_api/";
 
+            // try get note from server
             try {
                 note_name = /note=([^&#=]*)/.exec(window.location.search)[1];
 
@@ -193,13 +194,12 @@
 
                 if (xmlHttp.status == 200) {
                     sessionStorage.setItem('katexAutosave', xmlHttp.responseText);
-                    // window.location.replace("/");
                 }
-                
             } catch(err) {
                 console.log("oopsie", err);
             }
 
+            // try load note
             inputBox.innerText = sessionStorage.getItem('katexAutosave') || "\\text{\\Huge Finished Loading!}";
             inputBox.focus();
 
@@ -215,7 +215,7 @@
                 try {
                     var text = inputBox.innerText;
 
-                    if (sync) {
+                    if (sync) { // try upload
                         sessionStorage.setItem('katexAutosave', text);
                         
                         if (note_name !== undefined) storeNote(text);
