@@ -102,7 +102,7 @@
         <p id="statusBox">STATUS: Loading!</p>
         <button onclick="location.href='?note=macros';" type="button">macros</button>
         <button onclick="location.href='viewer';" type="button">export</button>
-        <button onclick="location.href='?note='+(prompt('Enter note name') || '');" type="button">open</button>
+        <button onclick="let n = prompt('Enter note name'); location.href= n ? '?note='+n : '?';" type="button">open</button>
         
         <div id="katex_wrapper">
             <pre id="inputBox" contenteditable="true">\text{\Huge LOADING}</pre>
