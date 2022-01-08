@@ -1,4 +1,4 @@
-const api_url = "http://localhost:7878/";
+const api_url = "/katex_api/";
 
 function getNoteName() {
     try {
