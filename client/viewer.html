@@ -5,69 +5,46 @@
         <meta charset="utf-8"/>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.css" integrity="sha384-ysFyB7Is//Q1JNgERb0bLJokXKM8eWJsjEutGvthoHtBilHWgbdmbYkQZdwCIGIq" crossorigin="anonymous">
         <script src="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.js" integrity="sha384-UWjC+k927Mtx6WQF5SzKTXLLrOYmzs69HvkUjiKvUwSOljzc+C6PrGquNpOvJBBo" crossorigin="anonymous"></script>
-
+        <link href="style.css" rel="stylesheet">
+        <script src="scripts.js"></script>
+    
         <style>
-        * {
-            font-size: 20px;
-        }
-
-        body {
-            background-color: rgb(20, 20, 20);
-        }
-
-        #displayBox {
-            /* margin-left: auto;
-            margin-right: auto; */
-            margin-top: 50px;
+        #outputBox {
             width: 100%;
-            /* max-width: 900px; */
-
-            /* background-color: inherit; */
-            text-align: center;
-            overflow: visible;
-
+            
             border-style: solid;
             border-color: white;
-            border-width: 0.1px;
-
-            white-space: pre-wrap;       /* Since CSS 2.1 */
-            white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
-            white-space: -pre-wrap;      /* Opera 4-6 */
-            white-space: -o-pre-wrap;    /* Opera 7 */
-            word-wrap: break-word;       /* Internet Explorer 5.5+ */
-
-            color: white;
+            border-width: 0.1px; 
         }
         </style>
     </head>
     <body>
-        <p id="displayBox"></p>
+        <p id="outputBox"></p>
 
         <script>
-            var displayBox = document.getElementById("displayBox");
-            
-            render();
+            var outputBox = document.getElementById("outputBox");
+            var noteName = getNoteName();
+            var text = "";
 
-            function render() {
-                try {
-                    var text = sessionStorage.getItem('katexAutosave');
-                    
-                    displayBox.innerHTML = katex.renderToString(text, {displayMode: true});
-                    displayBox.style.backgroundColor = '';
+            if (noteName) { // try load from server
+                let serverNote = getNoteFromServer(noteName);
+
+                if (serverNote) { // got a note
+                    text = serverNote;
+                    document.title = "Loaded from server";
                 }
-                catch (e) {
-                    if (e instanceof katex.ParseError) {
-                        // KaTeX can't parse the expression
-                        displayBox.innerHTML = ("Error in LaTeX '" + text + "': " + e.message)
-                            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                        
-                        displayBox.style.backgroundColor = '#800000';
-                    } else {
-                        throw e;  // other error
-                    }
+                else { // failed to get note
+                    text = sessionStorage.getItem('katexAutosave') || "\\text{Tried to load note '" + noteName + "'}\\\\\\text{Failed to load from server, no local save}";
+                    document.title = "Failed to load from server";
                 }
-                
             }
+            else { // no note requested
+                text = sessionStorage.getItem('katexAutosave') || "\\text{Finished Loading!} \\\\\\text{No notes requested}";
+                document.title = "No note requested";
+            }
+
+            tryRenderOutput(text, outputBox);
+
         </script>
     </body>
 </html>

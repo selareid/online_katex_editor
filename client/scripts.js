@@ -51,13 +51,13 @@ function trySendNoteToServer(noteName, text, statusBox) {
         xmlHttp.onreadystatechange  = function () {
             lastUploadFinished = true;
             console.log("Upload Response: " + xmlHttp.responseText);
-            statusBox.innerText = "Upload Status: " + (xmlHttp.statusText || "Failed") + "\n Sync Status: " + (xmlHttp.status === 200 && this_upload_iteration===upload_iterations);
+            if (statusBox) statusBox.innerText = "Upload Status: " + (xmlHttp.statusText || "Failed") + "\n Sync Status: " + (xmlHttp.status === 200 && this_upload_iteration===upload_iterations);
         }
 
         xmlHttp.send(text);
     }
     else {
-        statusBox.innerText = "Upload Status: Uploading\n Sync Status: ------";
+        if (statusBox)  statusBox.innerText = "Upload Status: Uploading\n Sync Status: ------";
     }
 }
 
