@@ -32,6 +32,7 @@
                 if (serverNote) { // got a note
                     text = serverNote;
                     document.title = "Loaded from server";
+                    setInterval(refreshNote, 5000);
                 }
                 else { // failed to get note
                     text = sessionStorage.getItem('katexAutosave') || "\\text{Tried to load note '" + noteName + "'}\\\\\\text{Failed to load from server, no local save}";
@@ -45,6 +46,21 @@
 
             tryRenderOutput(text, outputBox);
 
+            var lastLoadFinished = true;
+            function refreshNote() {
+                if (!lastLoadFinished) return;
+
+                document.title = "Loading...";
+                var serverNote = getNoteFromServer(noteName);
+                
+                if (serverNote) {
+                    text = serverNote;
+                    document.title = "Loaded from server";
+                    tryRenderOutput(text, outputBox);
+                }
+
+                lastLoadFinished = true;
+            }
         </script>
     </body>
 </html>
