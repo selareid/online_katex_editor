@@ -12,7 +12,7 @@
     <body>
         <p id="statusBox">STATUS: Loading!</p>
         <button onclick="location.href='?note=macros';" type="button">macros</button>
-        <button onclick="location.href='viewer';" type="button">export</button>
+        <button onclick="location.href='viewer?note='+noteName;" type="button">export</button>
         <button onclick="let n = prompt('Enter note name'); location.href= n ? '?note='+n : '?';" type="button">open</button>
         
         <div id="katex_wrapper">
