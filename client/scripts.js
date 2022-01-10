@@ -111,44 +111,6 @@ function colorInnerHTML(text) {
     text = text.replace(/(<\/span>)/g, "");
     // console.log("post " + text);
 
-    newText = '';
-    state = 'zoom';
-    updateI = 0;
-
-    for (i=0;i<=text.length;i++) {
-        curChar = text[i];
-
-        switch (state) {
-            case 'zoom':
-                if (curChar == `\\`/* && text[i-1] != '>'*/) {
-                    // console.log('foudn \ at '+i);
-                    state = 'found_start';
-                    newText += text.substring(updateI, i);
-                    updateI = i;
-                }
-                else {
-                    newText += text.substring(updateI, i);
-                    updateI = i;
-                }
-                // console.log(curChar);
-                break;
-            case 'found_start':
-                // console.log('woulda been: ' + curChar + ' ' + i + ' ' + updateI)
-
-                if (['&', ' ', '{','}','<','>','='].includes(curChar) || i==text.length-1) { //handle end of highlight
-                    newText += '<span style="color:#70d14d">' + text.substring(updateI, i) + '</span>';
-
-                    updateI = i;
-                    state = 'zoom';
-                }
-                else if (updateI != i && curChar=='\\') {
-                    newText += '<span style="color:#70d14d">' + text.substring(updateI, i+1) + '</span>';
-
-                    updateI = i+1;
-                    state = 'zoom';
-                }
-                break;
-        }
     }
 
     return newText;
