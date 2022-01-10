@@ -140,6 +140,16 @@ function colorInnerHTML(text) {
 
             position += 1 + insertText.length;
         }
+        else if (startPos !== undefined && startChar == '\\' && curChar == '\\' && startPos + 1 === position) { // case of '\\' (katex newline)
+            let insertText = '</span>';
+
+            newText = newText.slice(0, position+1) + insertText + newText.slice(position+1);
+
+            startPos = undefined;
+            startChar = undefined;
+
+            position += 1 + insertText.length;
+        }
         else {
             position++;
         }
