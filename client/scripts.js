@@ -103,14 +103,46 @@ function renderInput(inputBox) { //highlight input, etc
     }
 }
 
-function colorInnerHTML(text) {
-    // console.log("pre " + text)
+const startHighlight = ['\\'];
+const endHighlight = ['&', ' ', '{','}','<','>','='];
 
+function colorInnerHTML(text) {
     //remove span tags from text
     text = text.replace(/(<span)[^>]*(>)/g, "");
     text = text.replace(/(<\/span>)/g, "");
-    // console.log("post " + text);
 
+    newText = text;
+
+    var position = 0;
+    var startPos = undefined;
+    var startChar = undefined;
+
+    while (position < newText.length) {
+        let curChar = newText[position];
+        
+        if (startPos === undefined && startHighlight.includes(curChar)) { // regular start
+            let insertText = '<span style="color:#70d14d">';
+
+            newText = newText.slice(0, position) + insertText + newText.slice(position);
+
+            startPos = position + insertText.length;
+            startChar = curChar;
+
+            position += 1 + insertText.length;
+        }
+        else if (startPos !== undefined && endHighlight.includes(curChar)) { //regular end
+            let insertText = '</span>';
+
+            newText = newText.slice(0, position) + insertText + newText.slice(position);
+
+            startPos = undefined;
+            startChar = undefined;
+
+            position += 1 + insertText.length;
+        }
+        else {
+            position++;
+        }
     }
 
     return newText;
