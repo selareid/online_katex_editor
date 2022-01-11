@@ -104,7 +104,7 @@ function renderInput(inputBox) { //highlight input, etc
 }
 
 const startHighlight = ['\\'];
-const endHighlight = ['&', ' ', '{','}','<','>','=', '_'];
+const endHighlight = ['&', ' ', '{','}','<','>','=', '_', '$'];
 
 function colorInnerHTML(text) {
     //remove span tags from text
