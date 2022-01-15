@@ -161,6 +161,20 @@ function colorInnerHTML(text) {
 
             position += 1 + insertText.length;
         }
+        else if (startPos !== undefined && position !== startPos && startHighlight.includes(curChar)) { // back to back highlighting e.g. \quad\quad
+            //  - close previous highlight and processes this position again on next loop
+            // done this way since going from "\quad \quad" to "\quad\quad" created inconsistent behaviour 
+            // with the cursor position due to the combination of the hidden highlight html code
+
+            let insertText = '</span>';
+
+            newText = newText.slice(0, position) + insertText + newText.slice(position);
+
+            startPos = undefined;
+            startChar = undefined;
+
+            position += insertText.length;
+        }
         else {
             position++;
         }
