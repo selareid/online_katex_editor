@@ -129,6 +129,14 @@ function colorInnerHTML(text) {
 
             position += 1 + insertTextP1.length + 1 + insertTextP2.length;
         }
+        else if (startPos === undefined && curChar === '\\' && newText.slice(position + 1, position + 6) === '&amp;') { // case of \& cause & is &amp; in html
+            let insertTextP1 = '<span style="color:#FFA500">';
+            let insertTextP2 = '</span>';
+
+            newText = newText.slice(0, position) + insertTextP1 + curChar + newText[position + 1] + insertTextP2 + newText.slice(position + 6);
+
+            position += 1 + insertTextP1.length + 1 + insertTextP2.length;
+        }
         else if (startPos === undefined && startHighlight.includes(curChar)) { // regular start
             let insertText = '<span style="color:#70d14d">';
 
