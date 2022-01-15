@@ -1,3 +1,3 @@
-Not currently available anywherre. Host it yourself :)
-
-View/save note go `/katex?note=<note_name>` in the url. Where `<note_name>` is the name of the note
+Online katex editor and viewer with a backend for saving and syncing
+# Demo
+Not publicly available anywhere. Host it yourself :) - it's janky atm, don't bother
