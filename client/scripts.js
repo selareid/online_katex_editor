@@ -105,7 +105,7 @@ function renderInput(inputBox) { //highlight input, etc
 
 const startHighlight = ['\\'];
 const endHighlight = ['&', ' ', '{','}','<','>','=', '_', '$', '^', '#', '%', '~'];
-const slashHighlightOrange = [];
+const slashHighlightOrange = ['#', '$', '%', '^', '_', '~'];
 
 function colorInnerHTML(text) {
     //remove span tags from text
@@ -121,7 +121,15 @@ function colorInnerHTML(text) {
     while (position < newText.length) {
         let curChar = newText[position];
         
-        if (startPos === undefined && startHighlight.includes(curChar)) { // regular start
+        if (startPos === undefined && curChar === '\\' && slashHighlightOrange.includes(newText[position + 1])) { // case of \<orange highlight> e.g. \_
+            let insertTextP1 = '<span style="color:#FFA500">';
+            let insertTextP2 = '</span>';
+
+            newText = newText.slice(0, position) + insertTextP1 + curChar + newText[position + 1] + insertTextP2 + newText.slice(position + 2);
+
+            position += 1 + insertTextP1.length + 1 + insertTextP2.length;
+        }
+        else if (startPos === undefined && startHighlight.includes(curChar)) { // regular start
             let insertText = '<span style="color:#70d14d">';
 
             newText = newText.slice(0, position) + insertText + newText.slice(position);
