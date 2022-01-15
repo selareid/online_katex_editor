@@ -105,7 +105,7 @@ function renderInput(inputBox) { //highlight input, etc
 
 const startHighlight = ['\\'];
 const endHighlight = ['&', ' ', '{','}','<','>','=', '_', '$', '^', '#', '%', '~'];
-const slashHighlightOrange = ['#', '$', '%', '^', '_', '~'];
+const slashHighlightOrange = ['#', '$', '%', '^', '_', '~', '\\'];
 
 function colorInnerHTML(text) {
     //remove span tags from text
@@ -136,16 +136,6 @@ function colorInnerHTML(text) {
 
             startPos = position + insertText.length;
             startChar = curChar;
-
-            position += 1 + insertText.length;
-        }
-        else if (startPos !== undefined && startChar == '\\' && curChar == '\\' && startPos + 1 === position) { // case of '\\' (katex newline)
-            let insertText = '</span>';
-
-            newText = newText.slice(0, position+1) + insertText + newText.slice(position+1);
-
-            startPos = undefined;
-            startChar = undefined;
 
             position += 1 + insertText.length;
         }
