@@ -25,7 +25,32 @@ impl NoteStore {
                      Err(err) => err.to_string(),
                  });
 
-        NoteStore { notes_path, notes_map: Default::default() }
+        let mut note_store = NoteStore { notes_path, notes_map: Default::default() };
+
+        // force caching of all notes in directory
+        for note_name in NoteStore::get_notes_in_directory(notes_path) {
+            note_store.get_note(&note_name);
+        }
+
+        note_store
+    }
+
+    fn get_notes_in_directory(path_str: &'static str) -> Vec<String> {
+        let paths = fs::read_dir(path_str).unwrap();
+        let mut file_names: Vec<String> = Default::default();
+
+        for path in paths {
+            let os_string = path.as_ref().unwrap().file_name();
+
+            if let Ok(file_name) = os_string.into_string() {
+                file_names.push(file_name);
+            }
+            else {
+                println!("ERROR: couldn't convert os_string to string for path {:?}", path);
+            }
+        }
+
+        file_names
     }
 
     fn get_path_for_note(&self, note_name: &String) -> String {
