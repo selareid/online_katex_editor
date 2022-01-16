@@ -105,7 +105,7 @@ impl NoteStore {
         match stripped_note_name {
             "macros" => self.attempt_get_note_for_request(&String::from(stripped_note_name)),
             "notes_list" => (String::from("HTTP/1.1 200 OK"),
-                             format!("Only includes notes used in this session:\n{}", self.notes_map.keys().map(|s| String::clone(s)).reduce(|a, b| format!("{}\n{}", a, b)).unwrap_or("".to_string()))),
+                             format!("\\text{{Notes List}}:\n{}", self.notes_map.keys().map(|s| String::clone(s)).map(|s| format!{"\\\\\\text{{{}}}", s}).reduce(|a, b| format!("{}\n{}", a, b)).unwrap_or("".to_string()))),
             &_ => (String::from("HTTP/1.1 404 NOT FOUND"), format!("Couldn't find special note {}", stripped_note_name)),
         }
     }
