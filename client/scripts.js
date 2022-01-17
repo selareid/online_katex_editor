@@ -62,11 +62,12 @@ function trySendNoteToServer(noteName, text, statusBox) {
 }
 
 function renderOI(text, inputBox, outputBox) {
+    renderInput(inputBox);
+
     var renderSuccess = tryRenderOutput(text, outputBox);
     if (renderSuccess) {
         inputBox.style.borderColor = '';
         inputBox.style.height = outputBox.clientHeight + 'px';
-        renderInput(inputBox);
     }
     else {
         inputBox.style.borderColor = 'red';
