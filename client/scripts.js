@@ -38,8 +38,14 @@ function getNoteFromServer(noteName) {
 var lastUploadFinished = true;
 var upload_iterations = 0;
 
+const beforeUnloadListener = (event) => {
+    event.preventDefault();
+    return event.returnValue = "";
+  };
+
 function trySendNoteToServer(noteName, text, statusBox) {
     upload_iterations += 1;
+    addEventListener("beforeunload", beforeUnloadListener, {capture: true});
 
     if (lastUploadFinished) {
         let this_upload_iteration = upload_iterations;
@@ -51,7 +57,14 @@ function trySendNoteToServer(noteName, text, statusBox) {
         xmlHttp.onreadystatechange  = function () {
             lastUploadFinished = true;
             console.log("Upload Response: " + xmlHttp.responseText);
-            if (statusBox) statusBox.innerText = "Upload Status: " + (xmlHttp.statusText || "Failed") + "\n Sync Status: " + (xmlHttp.status === 200 && this_upload_iteration===upload_iterations);
+
+            if (statusBox) {
+                statusBox.innerText = "Upload Status: " + (xmlHttp.statusText || "Failed") + "\n Sync Status: " + (xmlHttp.status === 200 && this_upload_iteration===upload_iterations);
+                
+                if (xmlHttp.status === 200 && this_upload_iteration === upload_iterations) {
+                    removeEventListener("beforeunload", beforeUnloadListener, {capture: true});
+                }
+            }
         }
 
         xmlHttp.send(text);
