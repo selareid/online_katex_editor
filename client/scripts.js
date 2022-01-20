@@ -194,5 +194,10 @@ function colorInnerHTML(text) {
         }
     }
 
+    //finished going through text and haven't ended the highlight
+    if (startPos !== undefined) {
+        newText = newText += '</span>';
+    }
+
     return newText;
 }
