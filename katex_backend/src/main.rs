@@ -145,40 +145,9 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
             match request_type {
                 &"GET" => {handle_get_request(uri, stream, note_store);}
                 &"POST" => {
-                    println!("New POST request for {}", uri);
+                    let data_length = get_data_length_of_posted_content(&mut lines);
 
-                    let data_length: u64 = get_data_length_of_posted_content(&mut lines);
-
-                    let response: String = if data_length > MAX_NOTE_LENGTH {
-                        let status = String::from("HTTP/1.1 413 NOTE SIZE TOO LARGE");
-                        let contents = format!("Note Length: {}, Max Length: {}", data_length, MAX_NOTE_LENGTH);
-
-                        format!("{}\r\nContent-Length: {}\r\n\r\n{}",
-                                status,
-                                contents.len(),
-                                contents
-                        )
-                    }
-                    else {
-                        let mut take = reader.take(data_length);
-                        let data_string = get_request_data(&mut take);
-
-                        let (reply_code, reply_contents): (String, String) = match get_note_name(uri) {
-                            Ok(note_name) => note_store.attempt_store_note_for_request(&note_name, data_string),
-                            Err(err) => (format!("HTTP/1.1 400 BAD REQUEST"), String::from(err)),
-                        };
-
-
-                        println!(" Replying {}", reply_contents);
-
-                        format!(
-                            "{}\r\nContent-Length: {}\r\n\r\n{}",
-                            reply_code,
-                            reply_contents.len(),
-                            reply_contents
-                        )
-                    };
-
+                    let response = handle_post_request(note_store, reader, data_length, uri);
 
                     stream.write(response.as_bytes()).unwrap();
                     stream.flush().unwrap();
@@ -188,6 +157,41 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
         }
         None => {panic!("Woah, first_line of http request is empty :o")}
     }
+}
+
+fn handle_post_request(note_store: &mut NoteStore, reader: BufReader<&TcpStream>, data_length: u64, uri: &str) -> String {
+    println!("New POST request for {}", uri);
+
+    let response: String = if data_length > MAX_NOTE_LENGTH {
+        let status = String::from("HTTP/1.1 413 NOTE SIZE TOO LARGE");
+        let contents = format!("Note Length: {}, Max Length: {}", data_length, MAX_NOTE_LENGTH);
+
+        format!("{}\r\nContent-Length: {}\r\n\r\n{}",
+                status,
+                contents.len(),
+                contents
+        )
+    } else {
+        let mut take = reader.take(data_length);
+        let data_string = get_request_data(&mut take);
+
+        let (reply_code, reply_contents): (String, String) = match get_note_name(uri) {
+            Ok(note_name) => note_store.attempt_store_note_for_request(&note_name, data_string),
+            Err(err) => (format!("HTTP/1.1 400 BAD REQUEST"), String::from(err)),
+        };
+
+
+        println!(" Replying {}", reply_contents);
+
+        format!(
+            "{}\r\nContent-Length: {}\r\n\r\n{}",
+            reply_code,
+            reply_contents.len(),
+            reply_contents
+        )
+    };
+
+    return response;
 }
 
 fn get_request_data(mut take: &mut Take<BufReader<&TcpStream>>) -> String {
