@@ -38,8 +38,14 @@ function getNoteFromServer(noteName) {
 var lastUploadFinished = true;
 var upload_iterations = 0;
 
+const beforeUnloadListener = (event) => {
+    event.preventDefault();
+    return event.returnValue = "";
+  };
+
 function trySendNoteToServer(noteName, text, statusBox) {
     upload_iterations += 1;
+    addEventListener("beforeunload", beforeUnloadListener, {capture: true});
 
     if (lastUploadFinished) {
         let this_upload_iteration = upload_iterations;
@@ -51,7 +57,14 @@ function trySendNoteToServer(noteName, text, statusBox) {
         xmlHttp.onreadystatechange  = function () {
             lastUploadFinished = true;
             console.log("Upload Response: " + xmlHttp.responseText);
-            if (statusBox) statusBox.innerText = "Upload Status: " + (xmlHttp.statusText || "Failed") + "\n Sync Status: " + (xmlHttp.status === 200 && this_upload_iteration===upload_iterations);
+
+            if (statusBox) {
+                statusBox.innerText = "Upload Status: " + (xmlHttp.statusText || "Failed") + "\n Sync Status: " + (xmlHttp.status === 200 && this_upload_iteration===upload_iterations);
+                
+                if (xmlHttp.status === 200 && this_upload_iteration === upload_iterations) {
+                    removeEventListener("beforeunload", beforeUnloadListener, {capture: true});
+                }
+            }
         }
 
         xmlHttp.send(text);
@@ -61,13 +74,13 @@ function trySendNoteToServer(noteName, text, statusBox) {
     }
 }
 
-function renderOI(text, inputBox, outputBox) {
-    renderInput(inputBox);
+function renderOI(inputBox, inputHighlightBox, outputBox) {
+    renderInput(inputBox, inputHighlightBox);
 
-    var renderSuccess = tryRenderOutput(text, outputBox);
+    var renderSuccess = tryRenderOutput(inputBox.innerText, outputBox);
     if (renderSuccess) {
         inputBox.style.borderColor = '';
-        inputBox.style.height = outputBox.clientHeight + 'px';
+        document.getElementById("input_wrapper").style.height = outputBox.clientHeight + 'px';
     }
     else {
         inputBox.style.borderColor = 'red';
@@ -98,14 +111,9 @@ function tryRenderOutput(text, outputBox) { // returns whether success or not
     }
 }
 
-function renderInput(inputBox) { //highlight input, etc                
-    var cursorPos = Cursor.getCurrentCursorPosition(inputBox);
-    var newInputHTML = colorInnerHTML(inputBox.innerHTML);
-
-    if (newInputHTML != inputBox.innerHTML) {
-        inputBox.innerHTML = newInputHTML;
-        Cursor.setCurrentCursorPosition(cursorPos, inputBox);
-    }
+function renderInput(inputBox, inputHighlightBox) { //highlight input, etc
+    var highlightedHTML = colorInnerHTML(inputBox.innerHTML);
+    inputHighlightBox.innerHTML = highlightedHTML;
 }
 
 const startHighlight = ['\\'];
@@ -113,10 +121,6 @@ const endHighlight = ['&', ' ', '{','}','<','>','=', '_', '$', '^', '#', '%', '~
 const slashHighlightOrange = ['#', '$', '%', '^', '_', '~', '\\'];
 
 function colorInnerHTML(text) {
-    //remove span tags from text
-    text = text.replace(/(<span)[^>]*(>)/g, "");
-    text = text.replace(/(<\/span>)/g, "");
-
     newText = text;
 
     var position = 0;
@@ -179,6 +183,11 @@ function colorInnerHTML(text) {
         else {
             position++;
         }
+    }
+
+    //finished going through text and haven't ended the highlight
+    if (startPos !== undefined) {
+        newText = newText += '</span>';
     }
 
     return newText;
