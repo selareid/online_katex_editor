@@ -147,7 +147,7 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
                 &"POST" => {
                     let data_length = get_data_length_of_posted_content(&mut lines);
 
-                    let response = handle_post_request(note_store, reader, data_length, uri);
+                    let response = handle_post_request(uri, reader, data_length, note_store);
 
                     stream.write(response.as_bytes()).unwrap();
                     stream.flush().unwrap();
@@ -159,7 +159,7 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
     }
 }
 
-fn handle_post_request(note_store: &mut NoteStore, reader: BufReader<&TcpStream>, data_length: u64, uri: &str) -> String {
+fn handle_post_request(uri: &str, reader: BufReader<&TcpStream>, data_length: u64, note_store: &mut NoteStore) -> String {
     println!("New POST request for {}", uri);
 
     let response: String = if data_length > MAX_NOTE_LENGTH {
