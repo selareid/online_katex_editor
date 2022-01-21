@@ -74,10 +74,10 @@ function trySendNoteToServer(noteName, text, statusBox) {
     }
 }
 
-function renderOI(text, inputBox, inputHighlightBox, outputBox) {
+function renderOI(inputBox, inputHighlightBox, outputBox) {
     renderInput(inputBox, inputHighlightBox);
 
-    var renderSuccess = tryRenderOutput(text, outputBox);
+    var renderSuccess = tryRenderOutput(inputBox.innerText, outputBox);
     if (renderSuccess) {
         inputBox.style.borderColor = '';
         document.getElementById("input_wrapper").style.height = outputBox.clientHeight + 'px';
@@ -113,10 +113,7 @@ function tryRenderOutput(text, outputBox) { // returns whether success or not
 
 function renderInput(inputBox, inputHighlightBox) { //highlight input, etc
     var highlightedHTML = colorInnerHTML(inputBox.innerHTML);
-
-    if (highlightedHTML != inputHighlightBox.innerHTML) {
-        inputHighlightBox.innerHTML = highlightedHTML;
-    }
+    inputHighlightBox.innerHTML = highlightedHTML;
 }
 
 const startHighlight = ['\\'];
@@ -124,10 +121,6 @@ const endHighlight = ['&', ' ', '{','}','<','>','=', '_', '$', '^', '#', '%', '~
 const slashHighlightOrange = ['#', '$', '%', '^', '_', '~', '\\'];
 
 function colorInnerHTML(text) {
-    //remove span tags from text
-    text = text.replace(/(<span)[^>]*(>)/g, "");
-    text = text.replace(/(<\/span>)/g, "");
-
     newText = text;
 
     var position = 0;
