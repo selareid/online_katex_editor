@@ -17,13 +17,18 @@
         <button onclick="toggleEditorSize();" type="button">toggle preview</button>
         
         <div id="katex_wrapper">
-            <pre id="inputBox" contenteditable="true">\text{\Huge LOADING}</pre>
+            <div id="input_wrapper">
+                <pre id="highlightBox">\text{\Huge LOADING}</pre>
+                <pre id="inputBox" contenteditable="true">\text{\Huge LOADING}</pre>
+            </div>
             <span id="outputBox"></span>
         </div>
 
         <script>
             var statusBox = document.getElementById("statusBox");
+            var inputWrapper = document.getElementById("input_wrapper");
             var inputBox = document.getElementById("inputBox");
+            var inputHighlightBox = document.getElementById("highlightBox");
             var outputBox = document.getElementById("outputBox");
             var noteName = undefined;
 
@@ -49,7 +54,7 @@
             }
 
             //first render
-            renderOI(inputBox.innerText, inputBox, outputBox);
+            renderOI(inputBox, inputHighlightBox, outputBox);
             inputBox.focus();
 
 
@@ -61,12 +66,12 @@
                 if (noteName) trySendNoteToServer(noteName, text, statusBox);
                 else statusBox.innerText = "Not Uploading";
 
-                renderOI(text, inputBox, outputBox);
+                renderOI(inputBox, inputHighlightBox, outputBox);
             }, false);
 
             function toggleEditorSize() {
-                if (inputBox.style.width == '85vw') inputBox.style.width = '';
-                else inputBox.style.width = '85vw';
+                if (inputWrapper.style.width == '85vw') inputWrapper.style.width = '';
+                else inputWrapper.style.width = '85vw';
 
                 outputBox.hidden = !outputBox.hidden;
             }
