@@ -74,13 +74,13 @@ function trySendNoteToServer(noteName, text, statusBox) {
     }
 }
 
-function renderOI(text, inputBox, outputBox) {
-    renderInput(inputBox);
+function renderOI(text, inputBox, inputHighlightBox, outputBox) {
+    renderInput(inputBox, inputHighlightBox);
 
     var renderSuccess = tryRenderOutput(text, outputBox);
     if (renderSuccess) {
         inputBox.style.borderColor = '';
-        inputBox.style.height = outputBox.clientHeight + 'px';
+        document.getElementById("input_wrapper").style.height = outputBox.clientHeight + 'px';
     }
     else {
         inputBox.style.borderColor = 'red';
@@ -111,13 +111,11 @@ function tryRenderOutput(text, outputBox) { // returns whether success or not
     }
 }
 
-function renderInput(inputBox) { //highlight input, etc                
-    var cursorPos = Cursor.getCurrentCursorPosition(inputBox);
-    var newInputHTML = colorInnerHTML(inputBox.innerHTML);
+function renderInput(inputBox, inputHighlightBox) { //highlight input, etc
+    var highlightedHTML = colorInnerHTML(inputBox.innerHTML);
 
-    if (newInputHTML != inputBox.innerHTML) {
-        inputBox.innerHTML = newInputHTML;
-        Cursor.setCurrentCursorPosition(cursorPos, inputBox);
+    if (highlightedHTML != inputHighlightBox.innerHTML) {
+        inputHighlightBox.innerHTML = highlightedHTML;
     }
 }
 
