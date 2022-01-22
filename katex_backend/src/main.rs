@@ -167,8 +167,7 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
 
                             let response = handle_post_request(&uri, reader, data_length, note_store);
 
-                            stream.write(response.as_bytes()).unwrap();
-                            stream.flush().unwrap();
+                            write_stream(&mut stream, response);
                         },
                         URIType::Err => todo!(),
                     }
@@ -178,6 +177,11 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
         }
         None => {panic!("Woah, first_line of http request is empty :o")}
     }
+}
+
+fn write_stream(stream: &mut TcpStream, response: String) {
+    stream.write(response.as_bytes()).unwrap();
+    stream.flush().unwrap();
 }
 
 //map uri to URIType enum variant
@@ -289,8 +293,7 @@ fn handle_get_request(uri: &str, mut stream: TcpStream, note_store: &mut NoteSto
         contents
     );
 
-    stream.write(response.as_bytes()).unwrap();
-    stream.flush().unwrap();
+    write_stream(&mut stream, response);
 }
 
 fn get_return_data_for_get_request(uri: &str, note_store: &mut NoteStore) -> (String, String) {
