@@ -12,6 +12,13 @@ const MAX_NOTES: usize = 99;
 const SPECIAL_NOTE_PREFIX: &str = "test_special_note_";
 const RESERVED_NOTE_NAMES: [&str; 2] = ["macros", "notes_list"];
 
+enum URIType {
+    NotesList,
+    Macros,
+    Note(String),
+    Err
+}
+
 struct NoteStore {
     notes_path: &'static str,
     notes_map: HashMap<String, String>
@@ -138,24 +145,57 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
     let mut lines = reader.by_ref().lines();
     let first_line = lines.next().unwrap().unwrap();
     let first_line_vec = first_line.split_whitespace().collect::<Vec<&str>>();
-    let uri: &str = *first_line_vec.get(1).unwrap();
+    let uri_type: URIType = get_uri_type(*first_line_vec.get(1).unwrap());
 
     match first_line_vec.get(0) {
         Some(request_type) => {
             match request_type {
-                &"GET" => {handle_get_request(uri, stream, note_store);}
+                &"GET" => {
+                    match uri_type {
+                        URIType::NotesList => todo!(),
+                        URIType::Macros => todo!(),
+                        URIType::Note(uri) => {handle_get_request(&uri, stream, note_store);},
+                        URIType::Err => todo!(),
+                    }
+                }
                 &"POST" => {
-                    let data_length = get_data_length_of_posted_content(&mut lines);
+                    match uri_type {
+                        URIType::NotesList => todo!(),
+                        URIType::Macros => todo!(),
+                        URIType::Note(uri) => {
+                            let data_length = get_data_length_of_posted_content(&mut lines);
 
-                    let response = handle_post_request(uri, reader, data_length, note_store);
+                            let response = handle_post_request(&uri, reader, data_length, note_store);
 
-                    stream.write(response.as_bytes()).unwrap();
-                    stream.flush().unwrap();
+                            stream.write(response.as_bytes()).unwrap();
+                            stream.flush().unwrap();
+                        },
+                        URIType::Err => todo!(),
+                    }
                 }
                 _ => {println!("Bad request type {}", request_type);}
             }
         }
         None => {panic!("Woah, first_line of http request is empty :o")}
+    }
+}
+
+//map uri to URIType enum variant
+fn get_uri_type(uri: &str) -> URIType {
+    let split_uri: Vec<String> = uri.split('/').map(|s| String::from(s)).collect::<Vec<_>>();
+    let mut split_uri_iter = split_uri.iter();
+
+    split_uri_iter.next(); // we don't care about the stuff before the first / (it's blank)
+
+    let first_part_of_uri = split_uri_iter.next().unwrap();
+
+    match first_part_of_uri.as_str() {
+        "notes_list" => URIType::NotesList,
+        "macros" => URIType::Macros,
+        "notes" => {
+            URIType::Note(String::from(split_uri_iter.next().unwrap()))
+        },
+        _ => URIType::Err,
     }
 }
 
