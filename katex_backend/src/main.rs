@@ -16,7 +16,7 @@ enum URIType {
     NotesList,
     Macros,
     Note(String),
-    Err
+    Err(String)
 }
 
 struct NoteStore {
@@ -151,15 +151,15 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
         Some(request_type) => {
             match request_type {
                 &"GET" => {
-                    match uri_type {
+                    match &uri_type {
                         URIType::NotesList => todo!(),
                         URIType::Macros => todo!(),
                         URIType::Note(uri) => {handle_get_request(&uri, stream, note_store);},
-                        URIType::Err => todo!(),
+                        URIType::Err(_uri) => todo!(),
                     }
                 }
                 &"POST" => {
-                    match uri_type {
+                    match &uri_type {
                         URIType::NotesList => todo!(),
                         URIType::Macros => todo!(),
                         URIType::Note(uri) => {
@@ -169,7 +169,7 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
 
                             write_stream(&mut stream, response);
                         },
-                        URIType::Err => todo!(),
+                        URIType::Err(_uri) => todo!(),
                     }
                 }
                 _ => {println!("Bad request type {}", request_type);}
@@ -199,7 +199,7 @@ fn get_uri_type(uri: &str) -> URIType {
         "notes" => {
             URIType::Note(String::from(split_uri_iter.next().unwrap()))
         },
-        _ => URIType::Err,
+        _ => URIType::Err(uri.to_string()),
     }
 }
 
