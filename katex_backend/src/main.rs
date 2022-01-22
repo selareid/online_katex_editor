@@ -147,6 +147,14 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
     let first_line_vec = first_line.split_whitespace().collect::<Vec<&str>>();
     let uri_type: URIType = get_uri_type(*first_line_vec.get(1).unwrap());
 
+    if let URIType::Err(uri) = uri_type { // bad request
+        println!("Bad Request Received at {uri}");
+
+        let reply_contents = format!("Bad uri: {uri}");
+        write_stream(&mut stream, format!("HTTP/1.1 400 BAD REQUEST\r\nContent-Length: {}\r\n\r\n{}", reply_contents.len(), reply_contents));
+        return;
+    }
+
     match first_line_vec.get(0) {
         Some(request_type) => {
             match request_type {
@@ -155,7 +163,7 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
                         URIType::NotesList => todo!(),
                         URIType::Macros => todo!(),
                         URIType::Note(uri) => {handle_get_request(&uri, stream, note_store);},
-                        URIType::Err(_uri) => todo!(),
+                        URIType::Err(_uri) => unreachable!(),
                     }
                 }
                 &"POST" => {
@@ -169,7 +177,7 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
 
                             write_stream(&mut stream, response);
                         },
-                        URIType::Err(_uri) => todo!(),
+                        URIType::Err(_uri) => unreachable!(),
                     }
                 }
                 _ => {println!("Bad request type {}", request_type);}
