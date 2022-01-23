@@ -9,7 +9,6 @@ use std::error::Error;
 
 const MAX_NOTE_LENGTH: u64 = 10000000;
 const MAX_NOTES: usize = 99;
-const SPECIAL_NOTE_PREFIX: &str = "test_special_note_";
 const RESERVED_NOTE_NAMES: [&str; 2] = ["macros", "notes_list"];
 
 enum URIType {
@@ -91,7 +90,7 @@ impl NoteStore {
     }
 
     fn attempt_store_note_for_request(&mut self, note_name: &String, data: String) -> (String, String) {
-        if RESERVED_NOTE_NAMES.contains(&note_name.as_str()) || is_special_note(note_name) {
+        if RESERVED_NOTE_NAMES.contains(&note_name.as_str()) {
             return (format!("HTTP/1.1 401 Unauthorized"), format!("You're not allowed to edit note {}", &note_name));
         }
 
@@ -107,22 +106,13 @@ impl NoteStore {
             Ok(note_data) => (String::from("HTTP/1.1 200 OK"), format!("{}", note_data.clone())),
         }
     }
-
-    fn handle_special_note_get(&mut self, stripped_note_name: &str) -> (String, String) {
-        match stripped_note_name {
-            "macros" => self.attempt_get_note_for_request(&String::from(stripped_note_name)),
-            "notes_list" => (String::from("HTTP/1.1 200 OK"),
-                             format!("\\text{{Notes List}}:\n{}", self.notes_map.keys().map(|s| String::clone(s)).map(|s| format!{"\\\\\\text{{{}}}", s}).reduce(|a, b| format!("{}\n{}", a, b)).unwrap_or("".to_string()))),
-            &_ => (String::from("HTTP/1.1 404 NOT FOUND"), format!("Couldn't find special note {}", stripped_note_name)),
-        }
-    }
 }
 
 fn get_note_name(uri: &str) -> Result<String, &str> {
-    return if uri.len() <= 1 || String::from(&uri[1..]).contains(|c: char| !c.is_ascii_alphanumeric() && c != '_') {
+    return if uri.len() <= 1 || String::from(uri).contains(|c: char| !c.is_ascii_alphanumeric() && c != '_') {
         Err("Invalid Note Name")
     } else {
-        Ok(String::from(&uri[1..]))
+        Ok(String::from(uri))
     }
 }
 
@@ -160,8 +150,19 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
             match request_type {
                 &"GET" => {
                     match &uri_type {
-                        URIType::NotesList => todo!(),
-                        URIType::Macros => todo!(),
+                        URIType::NotesList => {
+                            let contents = format!("\\text{{Notes List}}:\n{}", note_store.notes_map.keys().map(|s| String::clone(s)).map(|s| format!{"\\\\\\text{{{}}}", s}).reduce(|a, b| format!("{}\n{}", a, b)).unwrap_or("".to_string()));
+                            write_stream(&mut stream, format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}", contents.len(), contents));
+                        },
+                        URIType::Macros => {
+                            match get_macros() {
+                                Ok(macro_data) => write_stream(&mut stream, format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}", macro_data.len(), macro_data)),
+                                Err(error) => {
+                                    let contents = format!("ERROR: {}", error);
+                                    write_stream(&mut stream, format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}", contents.len(), contents))
+                                },
+                            }
+                        },
                         URIType::Note(uri) => {handle_get_request(&uri, stream, note_store);},
                         URIType::Err(_uri) => unreachable!(),
                     }
@@ -311,20 +312,15 @@ fn handle_get_request(uri: &str, mut stream: TcpStream, note_store: &mut NoteSto
 fn get_return_data_for_get_request(uri: &str, note_store: &mut NoteStore) -> (String, String) {
     match get_note_name(uri) {
         Ok(note_name) => {
-            if is_special_note(&note_name) {
-                let stripped_note_name: &str = &note_name[SPECIAL_NOTE_PREFIX.len()..]; //note_name without SPECIAL_NOTE_PREFIX
-                note_store.handle_special_note_get(stripped_note_name)
-            }
-            else {
-                // Handle regular note
-                note_store.attempt_get_note_for_request(&note_name)
-            }
+            note_store.attempt_get_note_for_request(&note_name)
         }
         Err(err) => (String::from("HTTP/1.1 400 BAD REQUEST"), String::from(err)),
     }
 }
 
-fn is_special_note(note_name: &String) -> bool {
-    //checks that note_name starts with SPECIAL_NOTE_PREFIX
-    note_name.len() >= SPECIAL_NOTE_PREFIX.len() && &note_name[..SPECIAL_NOTE_PREFIX.len()] == SPECIAL_NOTE_PREFIX
+fn get_macros() -> Result<String, Box<dyn Error>> {
+    let mut file = File::open("macros.katex")?;
+    let mut buffer = String::new();
+    file.read_to_string(&mut buffer)?; //if unavailable returns error
+    Ok(buffer)
 }
