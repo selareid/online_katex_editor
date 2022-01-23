@@ -168,8 +168,8 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
                 }
                 &"POST" => {
                     match &uri_type {
-                        URIType::NotesList => todo!(),
-                        URIType::Macros => todo!(),
+                        URIType::NotesList => write_stream_unauthorized(&mut stream, "Not Authorised to edit NotesList"),
+                        URIType::Macros => write_stream_unauthorized(&mut stream, "Not Authorised to edit Macros"),
                         URIType::Note(uri) => {
                             let data_length = get_data_length_of_posted_content(&mut lines);
 
@@ -185,6 +185,10 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
         }
         None => {panic!("Woah, first_line of http request is empty :o")}
     }
+}
+
+fn write_stream_unauthorized(stream: &mut TcpStream, message: &str) {
+    write_stream(stream, format!("HTTP/1.1 401 Unauthorized\r\nContent-Length: {}\r\n\r\n{}", message.len(), message));
 }
 
 fn write_stream(stream: &mut TcpStream, response: String) {
