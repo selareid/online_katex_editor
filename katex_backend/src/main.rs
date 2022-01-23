@@ -148,10 +148,10 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
     let uri_type: URIType = get_uri_type(*first_line_vec.get(1).unwrap());
 
     if let URIType::Err(uri) = uri_type { // bad request
-        println!("Bad Request Received at {uri}");
+        println!("URIType::Err: {uri}");
 
-        let reply_contents = format!("Bad uri: {uri}");
-        write_stream(&mut stream, format!("HTTP/1.1 400 BAD REQUEST\r\nContent-Length: {}\r\n\r\n{}", reply_contents.len(), reply_contents));
+        let reply_contents = format!("Did not find anything at {uri}");
+        write_stream(&mut stream, format!("HTTP/1.1 404 NOT FOUND\r\nContent-Length: {}\r\n\r\n{}", reply_contents.len(), reply_contents));
         return;
     }
 
