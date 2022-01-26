@@ -210,7 +210,7 @@ fn get_uri_type(uri: &str) -> URIType {
         "notes_list" => URIType::NotesList,
         "macros" => URIType::Macros,
         "notes" => {
-            URIType::Note(String::from(split_uri_iter.next().unwrap()))
+            URIType::Note(String::from(split_uri_iter.next().unwrap_or(&"".to_string())))
         },
         _ => URIType::Err(uri.to_string()),
     }
