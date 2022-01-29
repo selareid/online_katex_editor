@@ -7,13 +7,15 @@
         <script src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js" integrity="sha384-z1fJDqw8ZApjGO3/unPWUPsIymfsJmyrDVWC8Tv/a1HeOtGmkwNd/7xUS0Xcnvsx" crossorigin="anonymous"></script>
         <link href="style.css" rel="stylesheet">
         <script src="scripts.js"></script>
+        <title>Katex Editor</title>
     </head>
     <body>
         <p id="statusBox">STATUS: Loading!</p>
-        <button onclick="location.href='?note=macros';" type="button">macros</button>
-        <button onclick="location.href='viewer?note='+noteName;" type="button">export</button>
         <button onclick="let n = prompt('Enter note name'); location.href= n ? '?note='+n : '?';" type="button">open</button>
+        <button onclick="location.href='viewer?note='+noteName;" type="button">export</button>
         <button onclick="toggleEditorSize();" type="button">toggle preview</button>
+        <button onclick="location.href='?macros';" type="button">macros</button>
+        <button onclick="location.href='?notes_list';" type="button">notes list</button>
         
         <div id="katex_wrapper">
             <div id="input_wrapper">
@@ -48,12 +50,23 @@
                 }
             }
             else { // no note requested
-                inputBox.innerText = sessionStorage.getItem('katexAutosave') || "\\text{Finished Loading!} \\\\\\text{No notes requested}";
-                statusBox.innerText = sessionStorage.getItem('katexAutosave') ? "STATUS: Loaded local note" : "STATUS: No Note Requested";
+                let search = getSearchDataIfAny();
+
+                if (search.item) {
+                    inputBox.innerText = search.data || "\\text{Issue getting search data}";
+                    statusBox.innerText = "Attempted to load '" + search.item + "'";
+                }
+                else {
+                    inputBox.innerText = sessionStorage.getItem('katexAutosave') || "\\text{Finished Loading!} \\\\\\text{No notes requested}";
+                    statusBox.innerText = sessionStorage.getItem('katexAutosave') ? "STATUS: Loaded local note" : "STATUS: No Note Requested";
+                }
             }
 
+
+
+
             //first render
-            renderOI(inputBox, inputHighlightBox, outputBox);
+            renderOI(inputBox, inputHighlightBox, outputBox, inputWrapper);
             inputBox.focus();
 
 
@@ -65,7 +78,7 @@
                 if (noteName) trySendNoteToServer(noteName, text, statusBox);
                 else statusBox.innerText = "Not Uploading";
 
-                renderOI(inputBox, inputHighlightBox, outputBox);
+                renderOI(inputBox, inputHighlightBox, outputBox, inputWrapper);
             }, false);
 
             function toggleEditorSize() {

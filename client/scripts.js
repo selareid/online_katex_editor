@@ -10,6 +10,27 @@ function getNoteName() {
     }
 }
 
+function getSearchDataIfAny() {
+    var searchItem = window.location.search.substring(1);
+    var searchData = null;
+
+    if (searchItem) {
+        try {
+            var xmlHttp = new XMLHttpRequest();
+            xmlHttp.open( "GET", api_url + searchItem, false ); // false for synchronous request
+            xmlHttp.send( null );
+            console.log(xmlHttp.responseText);
+    
+            searchData = xmlHttp.status == 200 ? xmlHttp.responseText : null;
+        }
+        catch(err) {
+            console.log("Error Getting Search From Server:\n " + err);
+        }
+    }
+
+    return {item: searchItem, data: searchData};
+}
+
 function storeNoteLocally(noteContents) {
     sessionStorage.setItem('katexAutosave', noteContents);
 }
@@ -22,7 +43,7 @@ function getLocallyStoredNote() {
 function getNoteFromServer(noteName) {
     try {
         var xmlHttp = new XMLHttpRequest();
-        xmlHttp.open( "GET", api_url + noteName, false ); // false for synchronous request
+        xmlHttp.open( "GET", api_url + "notes/" + noteName, false ); // false for synchronous request
         xmlHttp.send( null );
         console.log(xmlHttp.responseText);
 
@@ -52,7 +73,7 @@ function trySendNoteToServer(noteName, text, statusBox) {
         lastUploadFinished = false;
 
         var xmlHttp = new XMLHttpRequest();
-        xmlHttp.open("POST", api_url + noteName, true); // true for asynchronous request
+        xmlHttp.open("POST", api_url + "notes/" + noteName, true); // true for asynchronous request
         
         xmlHttp.onreadystatechange  = function () {
             lastUploadFinished = true;
@@ -74,16 +95,16 @@ function trySendNoteToServer(noteName, text, statusBox) {
     }
 }
 
-function renderOI(inputBox, inputHighlightBox, outputBox) {
+function renderOI(inputBox, inputHighlightBox, outputBox, inputWrapper) {
     renderInput(inputBox, inputHighlightBox);
 
     var renderSuccess = tryRenderOutput(inputBox.innerText, outputBox);
     if (renderSuccess) {
-        inputBox.style.borderColor = '';
+        inputWrapper.style.borderColor = '';
         document.getElementById("input_wrapper").style.height = outputBox.clientHeight + 'px';
     }
     else {
-        inputBox.style.borderColor = 'red';
+        inputWrapper.style.borderColor = 'red';
     }
 }
 
