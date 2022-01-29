@@ -95,16 +95,16 @@ function trySendNoteToServer(noteName, text, statusBox) {
     }
 }
 
-function renderOI(inputBox, inputHighlightBox, outputBox) {
+function renderOI(inputBox, inputHighlightBox, outputBox, inputWrapper) {
     renderInput(inputBox, inputHighlightBox);
 
     var renderSuccess = tryRenderOutput(inputBox.innerText, outputBox);
     if (renderSuccess) {
-        inputBox.style.borderColor = '';
+        inputWrapper.style.borderColor = '';
         document.getElementById("input_wrapper").style.height = outputBox.clientHeight + 'px';
     }
     else {
-        inputBox.style.borderColor = 'red';
+        inputWrapper.style.borderColor = 'red';
     }
 }
 
