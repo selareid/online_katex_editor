@@ -10,6 +10,7 @@ use std::error::Error;
 const MAX_NOTE_LENGTH: u64 = 10000000;
 const MAX_NOTES: usize = 99;
 const RESERVED_NOTE_NAMES: [&str; 2] = ["macros", "notes_list"];
+const DATA_PATH: &str = "data/";
 
 enum URIType {
     NotesList,
@@ -19,19 +20,13 @@ enum URIType {
 }
 
 struct NoteStore {
-    notes_path: &'static str,
+    notes_path: String,
     notes_map: HashMap<String, String>
 }
 
 impl NoteStore {
-    fn new(notes_path: &'static str) -> Self {
-        println!("Checking directory {} exists: {:?}", notes_path,
-                 match fs::create_dir_all(notes_path) {
-                     Ok(_) => "Success!".to_string(),
-                     Err(err) => err.to_string(),
-                 });
-
-        let mut note_store = NoteStore { notes_path, notes_map: Default::default() };
+    fn new(notes_path: &String) -> Self {
+        let mut note_store = NoteStore { notes_path: String::clone(notes_path), notes_map: Default::default() };
 
         // force caching of all notes in directory
         for note_name in NoteStore::get_notes_in_directory(notes_path) {
@@ -41,7 +36,7 @@ impl NoteStore {
         note_store
     }
 
-    fn get_notes_in_directory(path_str: &'static str) -> Vec<String> {
+    fn get_notes_in_directory(path_str: &str) -> Vec<String> {
         let paths = fs::read_dir(path_str).unwrap();
         let mut file_names: Vec<String> = Default::default();
 
@@ -117,8 +112,24 @@ fn get_note_name(uri: &str) -> Result<String, &str> {
 }
 
 fn main() {
-    let mut note_store: NoteStore = NoteStore::new("notes_store/");
+    let notes_path : String = format!("{}notes/", DATA_PATH);
 
+    println!("Checking directory {DATA_PATH}");
+
+    match fs::create_dir_all(DATA_PATH) {
+        Ok(_) => {
+            println!("Success!");
+            println!("Checking directory {notes_path}");
+
+            match fs::create_dir_all(&notes_path) {
+                Ok(_) => println!("Success!"),
+                Err(err) => println!("Failed: {}", err.to_string()),
+            }
+        },
+        Err(err) => println!("Failed: {}", err.to_string()),
+    }
+
+    let mut note_store: NoteStore = NoteStore::new(&notes_path);
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
 
     println!("Listening on {}", listener.local_addr().unwrap());
@@ -319,7 +330,7 @@ fn get_return_data_for_get_request(uri: &str, note_store: &mut NoteStore) -> (St
 }
 
 fn get_macros() -> Result<String, Box<dyn Error>> {
-    let mut file = File::open("macros.katex")?;
+    let mut file = File::open(format!("{}macros.katex", DATA_PATH))?;
     let mut buffer = String::new();
     file.read_to_string(&mut buffer)?; //if unavailable returns error
     Ok(buffer)
