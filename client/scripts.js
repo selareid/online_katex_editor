@@ -110,8 +110,7 @@ function renderOI(inputBox, inputHighlightBox, outputBox, inputWrapper) {
 
 function tryRenderOutput(text, outputBox) { // returns whether success or not
     try {
-        var html = katex.renderToString(text, {displayMode: true, trust: true});
-        outputBox.innerHTML = html;
+        outputBox.innerHTML = katex.renderToString(text, {displayMode: true, trust: true});
         outputBox.style.backgroundColor = '';
 
         return true;
@@ -119,11 +118,12 @@ function tryRenderOutput(text, outputBox) { // returns whether success or not
     catch (e) {
         if (e instanceof katex.ParseError) {
             // KaTeX can't parse the expression
-            var errorString = ("Error in LaTeX '" + text + "': " + e.message)
-                .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            
-            console.log(errorString);
-            outputBox.style.backgroundColor = '#800000';
+            // var errorString = ("Error in LaTeX '" + text + "': " + e.message)
+            //     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            // console.log(errorString);
+
+            outputBox.style.backgroundColor = '#300000';
+            outputBox.innerHTML = katex.renderToString(text, {displayMode: true, trust: true, throwOnError: false});
 
             return false;
         } else {
