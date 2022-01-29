@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<!-- KaTeX requires the use of the HTML5 doctype. Without it, KaTeX may not render properly -->
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.css" integrity="sha384-ysFyB7Is//Q1JNgERb0bLJokXKM8eWJsjEutGvthoHtBilHWgbdmbYkQZdwCIGIq" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.js" integrity="sha384-UWjC+k927Mtx6WQF5SzKTXLLrOYmzs69HvkUjiKvUwSOljzc+C6PrGquNpOvJBBo" crossorigin="anonymous"></script>
+        <link href="style.css" rel="stylesheet">
+        <script src="scripts.js"></script>
+        <title>A4 Export</title>
+    
+        <style>
+            * { color: black; }
+    
+            html { background-color: rgb(148, 127, 114); }
+
+            body {
+                width:210mm;
+                margin: 0;
+            }
+
+            #widthWrap {
+                background-color: white;
+            }
+
+            #outputBox {
+                width: 100%;
+                margin: 0;
+                padding-top: 1em;
+            }
+
+            @media print {
+                html {
+                    background-color: white;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div id="widthWrap">
+            <p id="outputBox"></p>
+        </div>
+
+        <script>
+            var outputBox = document.getElementById("outputBox");
+            var noteName = getNoteName();
+            var text = "";
+
+            if (noteName) { // try load from server
+                let serverNote = getNoteFromServer(noteName);
+
+                if (serverNote) { // got a note
+                    text = serverNote;
+                    document.title = "Loaded from server";
+                    setInterval(refreshNote, 5000);
+                }
+                else { // failed to get note
+                    text = sessionStorage.getItem('katexAutosave') || "\\text{Tried to load note '" + noteName + "'}\\\\\\text{Failed to load from server, no local save}";
+                    document.title = "Failed to load from server";
+                }
+            }
+            else { // no note requested
+                text = sessionStorage.getItem('katexAutosave') || "\\text{Finished Loading!} \\\\\\text{No notes requested}";
+                document.title = "No note requested";
+            }
+
+            tryRenderOutput(text, outputBox);
+
+            var lastLoadFinished = true;
+            function refreshNote() {
+                if (!lastLoadFinished) return;
+
+                document.title = "Loading...";
+                var serverNote = getNoteFromServer(noteName);
+                
+                if (serverNote) {
+                    text = serverNote;
+                    document.title = "Loaded from server";
+                    tryRenderOutput(text, outputBox);
+                }
+
+                lastLoadFinished = true;
+            }
+        </script>
+    </body>
+</html>
