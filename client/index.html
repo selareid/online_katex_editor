@@ -12,7 +12,8 @@
     <body>
         <p id="statusBox">STATUS: Loading!</p>
         <button onclick="let n = prompt('Enter note name'); location.href= n ? '?note='+n : '?';" type="button">open</button>
-        <button onclick="location.href='viewer?note='+noteName;" type="button">export</button>
+        <button onclick="location.href='viewer?note='+noteName;" type="button">viewer</button>
+        <button onclick="location.href='a4_export?note='+noteName;" type="button">print</button>
         <button onclick="toggleEditorSize();" type="button">toggle preview</button>
         <button onclick="location.href='?macros';" type="button">macros</button>
         <button onclick="location.href='?notes_list';" type="button">notes list</button>

@@ -7,16 +7,39 @@
         <script src="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.js" integrity="sha384-UWjC+k927Mtx6WQF5SzKTXLLrOYmzs69HvkUjiKvUwSOljzc+C6PrGquNpOvJBBo" crossorigin="anonymous"></script>
         <link href="style.css" rel="stylesheet">
         <script src="scripts.js"></script>
-        <title>Katex Editor - Viewer</title>
+        <title>A4 Export</title>
     
         <style>
-        #outputBox {
-            width: 100%;
-        }
+            * { color: black; }
+    
+            html { background-color: rgb(148, 127, 114); }
+
+            body {
+                width:210mm;
+                margin: 0;
+            }
+
+            #widthWrap {
+                background-color: white;
+            }
+
+            #outputBox {
+                width: 100%;
+                margin: 0;
+                padding-top: 1em;
+            }
+
+            @media print {
+                html {
+                    background-color: white;
+                }
+            }
         </style>
     </head>
     <body>
-        <p id="outputBox"></p>
+        <div id="widthWrap">
+            <p id="outputBox"></p>
+        </div>
 
         <script>
             var outputBox = document.getElementById("outputBox");

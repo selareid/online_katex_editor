@@ -110,8 +110,7 @@ function renderOI(inputBox, inputHighlightBox, outputBox, inputWrapper) {
 
 function tryRenderOutput(text, outputBox) { // returns whether success or not
     try {
-        var html = katex.renderToString(text, {displayMode: true, trust: true});
-        outputBox.innerHTML = html;
+        outputBox.innerHTML = katex.renderToString(text, {displayMode: true, trust: true});
         outputBox.style.backgroundColor = '';
 
         return true;
@@ -119,11 +118,12 @@ function tryRenderOutput(text, outputBox) { // returns whether success or not
     catch (e) {
         if (e instanceof katex.ParseError) {
             // KaTeX can't parse the expression
-            var errorString = ("Error in LaTeX '" + text + "': " + e.message)
-                .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            
-            console.log(errorString);
-            outputBox.style.backgroundColor = '#800000';
+            // var errorString = ("Error in LaTeX '" + text + "': " + e.message)
+            //     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            // console.log(errorString);
+
+            outputBox.style.backgroundColor = '#300000';
+            outputBox.innerHTML = katex.renderToString(text, {displayMode: true, trust: true, throwOnError: false});
 
             return false;
         } else {
@@ -166,6 +166,38 @@ function colorInnerHTML(text) {
             newText = newText.slice(0, position) + insertTextP1 + curChar + newText[position + 1] + insertTextP2 + newText.slice(position + 6);
 
             position += 1 + insertTextP1.length + 1 + insertTextP2.length;
+        }
+        else if (startPos === undefined && curChar === '\\' && newText.length > position + 'color{}'.length && newText.substring(position, position+7) === '\\color{') { // case of \color{<color name>}
+            // highlight the \color part
+            let insertText1 = '<span style="color:#70d14d">';
+            let insertText2 = '</span>';
+            newText = newText.slice(0, position) + insertText1 + '\\color' + insertText2 + newText.slice(position+6);
+            position += insertText1.length + insertText2.length + '\\color'.length;
+
+            position++; // skip the {
+
+            // highlight the <color name> in its own colour
+            let i = position;
+            let buffer = '';
+            while (true) {
+                let c = newText[i];
+
+                if ((startHighlight.includes(c) || endHighlight.includes(c) || slashHighlightOrange.includes(c))
+                 && c !== '}' && !(c === '#' && i === position && newText[position+7] === '}' || i === position && newText[position+4] === '}')) break; // special characters, except } and when color is hash code
+                else if (c === '}') { // end of colour text, highlight
+                    let insertText3 = '<span style="color:'+buffer+'">';
+                    let insertText4 = '</span>';
+                    newText = newText.slice(0, position) + insertText3 + buffer + insertText4 + newText.slice(position+buffer.length);
+                    position += insertText3.length + insertText4.length + buffer.length;
+                    break;
+                }
+                else if (c) buffer += c;
+                else break; // end of text
+
+                i++;
+            }
+
+            position++; // skip the }
         }
         else if (startPos === undefined && startHighlight.includes(curChar)) { // regular start
             let insertText = '<span style="color:#70d14d">';
