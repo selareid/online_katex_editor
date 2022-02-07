@@ -162,7 +162,11 @@ fn handle_connection(mut stream: TcpStream, note_store: &mut NoteStore) {
                 &"GET" => {
                     match &uri_type {
                         URIType::NotesList => {
-                            let contents = format!("\\text{{Notes List}}:\n{}", note_store.notes_map.keys().map(|s| String::clone(s)).map(|s| format!{"\\\\\\text{{{}}}", s}).reduce(|a, b| format!("{}\n{}", a, b)).unwrap_or("".to_string()));
+                            let contents = note_store.notes_map.keys()
+                                .map(|s| String::clone(s))
+                                // .map(|s| format!{"\\\\\\text{{{}}}", s})
+                                .reduce(|a, b| format!("{}\n{}", a, b))
+                                .unwrap_or("".to_string());
                             write_stream(&mut stream, format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}", contents.len(), contents));
                         },
                         URIType::Macros => {
